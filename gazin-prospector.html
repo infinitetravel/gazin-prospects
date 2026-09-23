@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gazin Prospects">
+<meta name="theme-color" content="#b8860b">
+<title>Gazin Prospects</title>
+<style>
+  :root{--gold:#b8860b;--gold-bg:#fffbf0;--gold-border:#e8d48a;--text:#1a1a1a;--muted:#6b7280;--bg:#f5f5f2;--card:#fff;--danger:#dc2626;--success:#16a34a;--info:#2563eb;--border:#e5e7eb}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+  .header{background:var(--gold);color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));position:sticky;top:0;z-index:100}
+  .header h1{font-size:17px;font-weight:700}
+  .header p{font-size:11px;opacity:.8;margin-top:1px}
+  .stats-bar{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .stat{background:rgba(255,255,255,.2);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600}
+  .controls{padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:88px;z-index:99}
+  .controls input{width:100%;border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;outline:none;background:var(--bg);margin-bottom:8px}
+  .controls input:focus{border-color:var(--gold)}
+  .filter-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+  .filter-row::-webkit-scrollbar{display:none}
+  .fb{border:1px solid var(--border);background:#fff;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;color:var(--muted)}
+  .fb.active{background:var(--gold);border-color:var(--gold);color:#fff}
+  .page{display:none}.page.active{display:block}
+  .city-section{margin:10px 14px}
+  .city-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:12px 12px 0 0;cursor:pointer;user-select:none}
+  .city-name{font-size:14px;font-weight:700;color:var(--gold)}
+  .city-count{font-size:11px;background:var(--gold);color:#fff;border-radius:20px;padding:2px 8px;margin-left:6px}
+  .chevron{font-size:11px;color:var(--gold);transition:transform .2s}
+  .city-section.collapsed .chevron{transform:rotate(-90deg)}
+  .city-section.collapsed .prospects-list{display:none}
+  .prospects-list{border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;overflow:hidden}
+  .prospect-card{background:var(--card);border-bottom:1px solid var(--border);padding:12px 14px;border-left:3px solid transparent}
+  .prospect-card:last-child{border-bottom:none}
+  .prospect-card.status-con{border-left-color:var(--info)}
+  .prospect-card.status-cli{border-left-color:var(--success)}
+  .prospect-card.status-sem{border-left-color:#d1d5db;opacity:.6}
+  .p-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+  .p-name{font-size:14px;font-weight:700}
+  .p-handle{font-size:12px;color:var(--info);margin-top:2px}
+  .p-seg{font-size:11px;color:var(--muted);margin-top:2px}
+  .p-end{font-size:11px;color:var(--muted);margin-top:2px}
+  .tipo-badge{font-size:10px;padding:3px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;margin-top:2px}
+  .t-joalheria{background:#fee2e2;color:#991b1b}
+  .t-semijoia{background:#dbeafe;color:#1e40af}
+  .t-bijuteria{background:#d1fae5;color:#065f46}
+  .t-relojoaria{background:#fef3c7;color:#92400e}
+  .t-acessorios{background:#f3f4f6;color:#374151}
+  .t-boutique{background:#fae8ff;color:#6b21a8}
+  .t-estetica{background:#fce7f3;color:#9d174d}
+  .p-obs{font-size:12px;color:var(--muted);margin-top:7px;line-height:1.4}
+  .gatilho-box{background:#fffbf0;border:1px solid var(--gold-border);border-radius:8px;padding:10px 12px;margin-top:8px;display:none}
+  .gatilho-box.open{display:block}
+  .gatilho-label{font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+  .gatilho-text{font-size:12px;color:var(--text);line-height:1.55}
+  .gatilho-copy{margin-top:7px;font-size:11px;font-weight:700;background:var(--gold);color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer}
+  .status-row{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap}
+  .sb{font-size:11px;padding:4px 9px;border-radius:20px;border:1.5px solid;cursor:pointer;font-weight:500;background:transparent;white-space:nowrap}
+  .s-nao{border-color:#d1d5db;color:#6b7280}.s-nao.on{background:#f3f4f6;border-color:#9ca3af;color:#374151}
+  .s-con{border-color:#93c5fd;color:var(--info)}.s-con.on{background:#dbeafe;border-color:var(--info)}
+  .s-sem{border-color:#fca5a5;color:var(--danger)}.s-sem.on{background:#fee2e2;border-color:var(--danger)}
+  .s-cli{border-color:#86efac;color:var(--success)}.s-cli.on{background:#dcfce7;border-color:var(--success)}
+  .action-row{display:flex;gap:7px;margin-top:10px}
+  .ab{display:flex;align-items:center;justify-content:center;gap:4px;padding:9px 0;border-radius:10px;font-size:12px;font-weight:700;text-decoration:none;border:none;cursor:pointer;flex:1}
+  .btn-ig{background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff}
+  .btn-wa{background:#25d366;color:#fff}
+  .btn-wa.off{background:#d1d5db;color:#9ca3af;cursor:default}
+  .btn-scr{background:var(--gold-bg);border:1px solid var(--gold-border);color:var(--gold)}
+  .btn-nota{background:#f3f4f6;border:1px solid var(--border);color:#374151}
+  .nota-area{margin-top:10px;display:none}
+  .nota-area.open{display:block}
+  .nota-area textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;resize:none;outline:none;min-height:64px}
+  .nota-area textarea:focus{border-color:var(--gold)}
+  .nota-save{margin-top:5px;background:var(--gold);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer}
+  .dica-page{padding:14px}
+  .dica-card{background:#fff;border-radius:12px;border:1px solid var(--border);margin-bottom:12px;overflow:hidden}
+  .dica-header{background:var(--gold);color:#fff;padding:10px 14px;font-size:13px;font-weight:700}
+  .dica-body{padding:12px 14px;font-size:13px;line-height:1.7;color:var(--text)}
+  .dica-body strong{color:var(--gold)}
+  .dica-body ol{padding-left:1.2rem}
+  .tag-pill{display:inline-block;background:#f3f4f6;border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:12px;margin:3px 3px 3px 0;font-family:monospace}
+  .settings-section{margin:14px;background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden}
+  .settings-item{padding:14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .settings-item:last-child{border-bottom:none}
+  .settings-label{font-size:14px;font-weight:600}
+  .settings-sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .sa{background:var(--gold);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
+  .sa.red{background:var(--danger)}
+  .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;padding:8px 0;padding-bottom:calc(8px + env(safe-area-inset-bottom));z-index:200}
+  .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted);cursor:pointer;background:none;border:none;padding:4px 0}
+  .nav-btn .icon{font-size:20px}
+  .nav-btn.active{color:var(--gold);font-weight:700}
+  .empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
+  .toast{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+  .toast.show{opacity:1}
+  .ref-tag{font-size:10px;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 5px;margin-left:4px;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <div><h1>💎 Gazin Prospects</h1><p>Showroom Vitória · ES + Norte RJ</p></div>
+  </div>
+  <div class="stats-bar">
+    <div class="stat" id="st-total">— prospects</div>
+    <div class="stat" id="st-con">— contatados</div>
+    <div class="stat" id="st-cli">— clientes</div>
+  </div>
+</div>
+
+<div class="page active" id="page-prospects">
+  <div class="controls">
+    <input type="text" id="search" placeholder="Buscar cidade, empresa ou @perfil…" oninput="applyFilters()">
+    <div class="filter-row">
+      <button class="fb active" onclick="setFilter('todos',this)">Todos</button>
+      <button class="fb" onclick="setFilter('nao',this)">Não contatados</button>
+      <button class="fb" onclick="setFilter('con',this)">Contatados</button>
+      <button class="fb" onclick="setFilter('cli',this)">Clientes ✓</button>
+      <button class="fb" onclick="setFilter('sem',this)">Sem interesse</button>
+    </div>
+  </div>
+  <div id="container"></div>
+</div>
+
+<div class="page" id="page-dicas">
+  <div class="dica-page">
+    <div class="dica-card">
+      <div class="dica-header">🎯 Garimpar prospects direto no Instagram</div>
+      <div class="dica-body">O Google indexa mal perfis pequenos. O melhor garimpo é <strong>dentro do Instagram</strong>:
+        <ol style="margin-top:8px">
+          <li>Toque em 🔍 <strong>Busca → Locais</strong></li>
+          <li>Digite o nome da cidade (ex: <em>Aracruz ES</em>)</li>
+          <li>Filtre por <strong>Recentes</strong></li>
+          <li>Procure lojas de bijuterias, moda, estética, salões</li>
+        </ol>
+      </div>
+    </div>
+    <div class="dica-card">
+      <div class="dica-header">🏷️ Hashtags para garimpar</div>
+      <div class="dica-body">
+        <span class="tag-pill">#semijoiases</span><span class="tag-pill">#bijuteriases</span><span class="tag-pill">#modafemininaES</span><span class="tag-pill">#boutiquees</span><span class="tag-pill">#revendedoraes</span><span class="tag-pill">#acessoriosES</span><span class="tag-pill">#joiases</span><span class="tag-pill">#semijoiasvitoria</span><span class="tag-pill">#modaaracruz</span><span class="tag-pill">#acessorioscolatina</span><span class="tag-pill">#joiaslinhares</span><span class="tag-pill">#semijoiassaomateus</span><span class="tag-pill">#modanovavenecia</span><br><br>
+        <strong>Dica bônus:</strong> veja quem comenta nos perfis dos concorrentes — revendedoras aparecem assim.
+      </div>
+    </div>
+    <div class="dica-card">
+      <div class="dica-header">📍 Cidades ainda a explorar</div>
+      <div class="dica-body">
+        <span class="tag-pill">Anchieta</span><span class="tag-pill">Piúma</span><span class="tag-pill">Marataízes</span><span class="tag-pill">Domingos Martins</span><span class="tag-pill">Afonso Cláudio</span><span class="tag-pill">Castelo ES</span><span class="tag-pill">Alegre ES</span><span class="tag-pill">Guaçuí</span><span class="tag-pill">Viana ES</span><span class="tag-pill">Itarana</span><span class="tag-pill">Fundão</span><span class="tag-pill">Ibiraçu</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-settings">
+  <div style="padding:14px 14px 6px;font-size:16px;font-weight:700">Configurações</div>
+  <div class="settings-section">
+    <div class="settings-item">
+      <div><div class="settings-label">Exportar dados</div><div class="settings-sub">Backup dos status e notas em JSON</div></div>
+      <button class="sa" onclick="exportData()">Exportar</button>
+    </div>
+    <div class="settings-item">
+      <div><div class="settings-label">Importar dados</div><div class="settings-sub">Restaurar de backup JSON</div></div>
+      <button class="sa" onclick="document.getElementById('imp').click()">Importar</button>
+      <input type="file" id="imp" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+    <div class="settings-item">
+      <div><div class="settings-label">Limpar tudo</div><div class="settings-sub">Remove status e notas salvas</div></div>
+      <button class="sa red" onclick="clearAll()">Limpar</button>
+    </div>
+  </div>
+  <div style="padding:14px;font-size:12px;color:var(--muted);line-height:1.7">
+    <strong style="color:var(--text)">Instalar no celular:</strong><br>
+    📱 <strong>iPhone (Safari):</strong> Compartilhar → "Adicionar à Tela de Início"<br>
+    🤖 <strong>Android (Chrome):</strong> Menu ⋮ → "Adicionar à tela inicial"<br><br>
+    Total de prospects: <strong id="cfg-total">—</strong>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <button class="nav-btn active" onclick="showPage('prospects',this)"><span class="icon">🎯</span>Prospects</button>
+  <button class="nav-btn" onclick="showPage('dicas',this)"><span class="icon">💡</span>Dicas</button>
+  <button class="nav-btn" onclick="showPage('settings',this)"><span class="icon">⚙️</span>Config</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// BASE DE PROSPECTS — 60 prospects, 20 cidades
+// ═══════════════════════════════════════════════════════════
+const DATA = [
+
+  // ── VITÓRIA ─────────────────────────────────────────────
+  {id:"daloh",cidade:"Vitória",nome:"Acessórios da Loh",handle:"@acessorios_daloh",tipo:"semijoia",seg:"7,3k",end:"",obs:"Semijoias Ouro 18k — loja física Reta da Penha",ig:"https://www.instagram.com/acessorios_daloh/",wa:"",g:""},
+  {id:"ricardovieira",cidade:"Vitória",nome:"Joalheiro Ricardo Vieira",handle:"@joalheiroricardovieira",tipo:"joalheria",seg:"3,8k",end:"",obs:"Maior tradição em joalheria do ES — Shopping Vitória",ig:"https://www.instagram.com/joalheiroricardovieira/",wa:"",g:""},
+
+  // ── VILA VELHA ──────────────────────────────────────────
+  {id:"flordourada",cidade:"Vila Velha",nome:"Flor Dourada",handle:"@flordouradasemijoias",tipo:"semijoia",seg:"99k",end:"R. Aurora 300 / Getúlio Vargas 280 — Glória",obs:"13 anos, atacado e varejo, semijoias/pratas/relógios",ig:"https://www.instagram.com/flordouradasemijoias/",wa:"",g:""},
+  {id:"larissasemijoias",cidade:"Vila Velha",nome:"Larissa Semijoias",handle:"@larissasemijoiass",tipo:"semijoia",seg:"—",end:"",obs:"Semijoias em Vila Velha",ig:"https://www.instagram.com/larissasemijoiass/",wa:"",g:""},
+  {id:"safirabijes",cidade:"Vila Velha",nome:"Safira Bijuterias ES",handle:"@safirabijuterias.es",tipo:"bijuteria",seg:"12k",end:"",obs:"Acessórios, make e bolsas — Castelo e Glória/VV",ig:"https://www.instagram.com/safirabijuterias.es/",wa:"",g:""},
+  {id:"movatojoias",cidade:"Vila Velha",nome:"Movato Joias",handle:"@movatojoias",tipo:"joalheria",seg:"66k",end:"",obs:"Alianças ouro 18k, fabricação própria",ig:"https://www.instagram.com/movatojoias/",wa:"",g:""},
+
+  // ── SERRA ───────────────────────────────────────────────
+  {id:"elaup",cidade:"Serra / Vila Velha",nome:"ELA UP Acessórios",handle:"@elaup",tipo:"acessorios",seg:"100k+",end:"",obs:"Maior loja BR de acessórios em aço inox no Instagram",ig:"https://www.instagram.com/elaup/",wa:"",g:""},
+
+  // ── CACHOEIRO ───────────────────────────────────────────
+  {id:"agathajoias",cidade:"Cachoeiro de Itapemirim",nome:"Ágatha Joias",handle:"@agatha_joias",tipo:"joalheria",seg:"16k",end:"",obs:"2 lojas físicas em Cachoeiro — ativa no WhatsApp",ig:"https://www.instagram.com/agatha_joias/",wa:"",g:""},
+  {id:"louzada",cidade:"Cachoeiro de Itapemirim",nome:"Relojoaria Louzada",handle:"@relojoarialouzada",tipo:"relojoaria",seg:"8,6k",end:"",obs:"Desde 1996 — 1.718 posts, muito ativa",ig:"https://www.instagram.com/relojoarialouzada/",wa:"",g:""},
+
+  // ── COLATINA ────────────────────────────────────────────
+  {id:"vitoriajoiascol",cidade:"Colatina",nome:"Vitória Joias Colatina",handle:"@vitoriajoiascol",tipo:"semijoia",seg:"6,6k",end:"",obs:"Atacado e varejo, envia para todo Brasil",ig:"https://www.instagram.com/vitoriajoiascol/",wa:"",g:""},
+  {id:"flaviarjoias",cidade:"Colatina",nome:"Flávia Joias",handle:"@flaviarjoias",tipo:"joalheria",seg:"5,8k",end:"",obs:"15 anos, ouro, semijoias, prata e relógios",ig:"https://www.instagram.com/flaviarjoias/",wa:"",g:""},
+  {id:"jcasadascanetas",cidade:"Colatina",nome:"Joalheria Casa das Canetas",handle:"@jcasadascanetas",tipo:"joalheria",seg:"4,1k",end:"",obs:"Vende, fabrica e conserta joias em geral",ig:"https://www.instagram.com/jcasadascanetas/",wa:"",g:""},
+  {id:"luanavago",cidade:"Colatina",nome:"Luana Vago",handle:"@luana_vago",tipo:"boutique",seg:"—",end:"R. Santa Maria, 109 — Centro",obs:"Boutique feminina — ICP para cross-selling de semijoias",ig:"https://instagram.com/luana_vago",wa:"5527999124013",g:"Olá! Acompanho o estilo da Luana Vago. Sabemos que o vestuário sofre com quebra de grade. Viemos mostrar como proteger o faturamento agregando semijoias com margem de até 300% aos seus looks, sem precisar expandir a loja física. Faz sentido enviar duas fotos do nosso modelo atacadista?"},
+  {id:"livialivamoda",cidade:"Colatina",nome:"Lívia Lívia Moda",handle:"—",tipo:"boutique",seg:"—",end:"Tv. Túlio Margoto, 17 — Centro",obs:"Boutique feminina — sem Instagram, abordar via WhatsApp",ig:"",wa:"5527999199496",g:"Oi! O conceito da Lívia Lívia Moda é excelente. Que tal agregar acessórios atemporais de paládio e garantia eterna aos seus looks? É um produto de giro rápido, sem restrição de tamanho, que multiplica o ticket médio das clientes que já compram com você."},
+
+  // ── LINHARES ────────────────────────────────────────────
+  {id:"rigottijoias",cidade:"Linhares",nome:"Rigotti Joias",handle:"@rigotti_joias",tipo:"joalheria",seg:"18k",end:"",obs:"Muito ativa, 2.047 posts — prospect quente 🔥",ig:"https://www.instagram.com/rigotti_joias/",wa:"",g:""},
+  {id:"ceararajoias",cidade:"Linhares",nome:"Ceará Joias",handle:"@ceara_joias",tipo:"joalheria",seg:"—",end:"",obs:"Localizada em Linhares ES",ig:"https://www.instagram.com/ceara_joias/",wa:"",g:""},
+  {id:"dipietralinhares",cidade:"Linhares",nome:"Dipietra Acessórios",handle:"@dipietralinhares",tipo:"acessorios",seg:"—",end:"",obs:"Loja física em Linhares",ig:"https://www.instagram.com/dipietralinhares/",wa:"",g:""},
+  {id:"belissimalinhares",cidade:"Linhares",nome:"Belíssima Linhares",handle:"@belissima.linhares",tipo:"acessorios",seg:"—",end:"",obs:"Loja multimarca — verificar mix de produtos",ig:"https://www.instagram.com/belissima.linhares/",wa:"",g:""},
+  {id:"sailooshop",cidade:"Linhares",nome:"Sailoo Moda Feminina",handle:"@sailooshop",tipo:"boutique",seg:"—",end:"Av. Pres. Castelo Branco, 443",obs:"Boutique feminina com boa identidade visual",ig:"https://www.instagram.com/sailooshop",wa:"5527997534372",g:"Tudo bem? A identidade visual da Sailoo em Linhares é fantástica. O cross-selling com semijoias antialérgicas (livres de níquel) é perfeito para compor a vitrine e elevar o ticket da venda. Teria 5 minutos para conversarmos sobre a margem de revenda da Gazin?"},
+  {id:"usecimartins",cidade:"Linhares",nome:"Use Ci Martins",handle:"@use_ci_martins",tipo:"boutique",seg:"—",end:"Av. José Armani, 22",obs:"Boutique feminina com boa presença digital",ig:"https://www.instagram.com/use_ci_martins/",wa:"5527999324382",g:"Olá! Vimos o fluxo da Use Ci Martins. Lojistas de Linhares estão turbinando os lucros de forma rápida com nossos displays. Com investimento mínimo, você coloca peças com garantia eterna na vitrine. Consigo te enviar um spoiler do nosso catálogo?"},
+
+  // ── SÃO MATEUS ──────────────────────────────────────────
+  {id:"joalheriasilvasm",cidade:"São Mateus",nome:"Joalheria Silva",handle:"@joalheriasilva.sm",tipo:"joalheria",seg:"10k",end:"",obs:"Desde 1970, fabricação própria — prospect quente 🔥",ig:"https://www.instagram.com/joalheriasilva.sm/",wa:"",g:""},
+  {id:"clinderme",cidade:"São Mateus",nome:"Clínica Estética Clinderme",handle:"—",tipo:"estetica",seg:"—",end:"R. Dr. Arlíndo Sodré, 346 — Fátima",obs:"Clínica de estética — recepção como vitrine de semijoias",ig:"",wa:"5527998699098",g:"Tudo bem? O nível de atendimento da Clinderme é excelente. Muitas clínicas parceiras da Gazin estão transformando o tempo de espera na recepção em lucro passivo com nossos displays. E o melhor: nossas peças são 100% livres de níquel, ideais para pacientes em procedimentos. Conseguimos falar 5 minutos sobre isso?"},
+  {id:"drajoici",cidade:"São Mateus",nome:"Dra. Joici Escarabelle",handle:"—",tipo:"estetica",seg:"—",end:"R. Reginaldo Daher Santos, s/n — Sernamby",obs:"Estética facial avançada — público que valoriza luxo",ig:"",wa:"5527998546759",g:"Olá, Dra. Joici! Sabemos que suas pacientes de estética avançada valorizam luxo e exclusividade. Nossas peças antialérgicas (sem níquel) e com banho de paládio são ideais para o pós-procedimento e geram uma ótima receita passiva para o seu consultório. Posso te enviar uma foto do display iluminado?"},
+
+  // ── ARACRUZ ─────────────────────────────────────────────
+  {id:"imperiumaracruz",cidade:"Aracruz",nome:"Imperium Aracruz",handle:"@imperiumaracruz",tipo:"boutique",seg:"—",end:"R. Quintino Loureiro, 271 — Centro",obs:"Boutique com curadoria diferenciada",ig:"https://www.instagram.com/imperiumaracruz/",wa:"5527999877979",g:"Oi! A curadoria da Imperium chama muita atenção. Acessórios atemporais com garantia eterna combinam com qualquer estação do ano, nunca encalham por numeração e geram retorno super rápido para a loja. Posso te apresentar o nosso modelo de negócios?"},
+  {id:"ousadiaaracruz",cidade:"Aracruz",nome:"Ousadia Modas",handle:"@ousadia_aracruz",tipo:"boutique",seg:"—",end:"R. Ananias Neto, 200 — Centro",obs:"Foco em tendência — cross-selling estratégico",ig:"https://www.instagram.com/ousadia_aracruz/",wa:"5527981415469",g:"Olá! Acompanho a Ousadia Modas no Centro. Como o forte de vocês é a tendência, o cross-selling com semijoias atacadistas de garantia vitalícia é perfeito para elevar o ticket de cada venda. Faz sentido falarmos rapidamente sobre rentabilidade?"},
+
+  // ── NOVA VENÉCIA ────────────────────────────────────────
+  {id:"zaimodas",cidade:"Nova Venécia",nome:"Zai Modas",handle:"—",tipo:"boutique",seg:"—",end:"Av. Vitória, 513 — Centro",obs:"Referência em moda feminina em Nova Venécia",ig:"https://zaimodas.com.br/",wa:"5527375221000",g:"Olá! Acompanho a Zai Modas em Nova Venécia. Sabemos que o vestuário às vezes gera estoque parado por quebra de grade. Viemos mostrar como proteger o faturamento agregando semijoias de giro rápido e margem alta aos seus looks. Posso enviar o nosso catálogo?"},
+  {id:"meialuz",cidade:"Nova Venécia",nome:"Meia Luz Boutique",handle:"—",tipo:"boutique",seg:"—",end:"Av. Vitória, 151 Lj A — Centro",obs:"Boutique feminina em Nova Venécia — sem Instagram",ig:"",wa:"5527375221428",g:"Oi! A curadoria da Meia Luz Boutique é incrível. O cross-selling com semijoias atacadistas de garantia vitalícia da Gazin é perfeito para compor a vitrine e elevar o ticket médio de cada cliente. Teria 5 minutos para conversarmos?"},
+
+  // ── BAIXO GUANDU ────────────────────────────────────────
+  {id:"maada",cidade:"Baixo Guandu",nome:"Maadá Moda Feminina",handle:"@use.maada",tipo:"boutique",seg:"—",end:"R. Madame Albertina Holz, 165 — Centro",obs:"Identidade forte — ICP ideal para semijoias",ig:"https://instagram.com/use.maada",wa:"5527997498922",g:"Tudo bem? A identidade da Maadá em Baixo Guandu chama muito a atenção. Acessórios de luxo com garantia eterna não encalham por numeração e dão muito retorno. Gostaria de conhecer nossas condições para revenda atacadista?"},
+  {id:"darklemsmod",cidade:"Baixo Guandu",nome:"Darklem's Modas",handle:"@darklemsconfecc",tipo:"boutique",seg:"—",end:"Av. Carlos Medeiros, 417 — São Vicente",obs:"Bom giro de clientes — display junto ao caixa",ig:"https://instagram.com/darklemsconfecc",wa:"5527997868585",g:"Olá! O giro de clientes da Darklem's é excelente. Com um pequeno display de semijoias Gazin perto do caixa, você aumenta drasticamente o lucro por venda sem gastar com mais espaço físico. Faz sentido receber fotos dos nossos lançamentos?"},
+
+  // ── SÃO GABRIEL DA PALHA ────────────────────────────────
+  {id:"duasconcept",cidade:"São Gabriel da Palha",nome:"Duas Concept Store",handle:"—",tipo:"boutique",seg:"—",end:"Av. João XXIII, 25 — Centro",obs:"Concept store — dita tendências na cidade",ig:"",wa:"5527996658812",g:"Olá! O perfil da Duas Concept dita tendências em São Gabriel da Palha. Quero te mostrar como as semijoias da Gazin (sem tamanho restrito e com giro rápido) multiplicam o ticket médio de cada cliente que já entra na sua loja. Faz sentido falarmos hoje?"},
+  {id:"bonitacloset",cidade:"São Gabriel da Palha",nome:"Bonita Closet",handle:"@b_bonitacloset",tipo:"boutique",seg:"—",end:"Av. Pres. Castelo Branco — Centro",obs:"Ampla abrangência — fluxo de clientes já garantido",ig:"https://instagram.com/b_bonitacloset",wa:"5527995235870",g:"Oi! A abrangência da Bonita Closet é excelente. Vocês já possuem fluxo; o próximo passo é escalar o lucro. Com investimento mínimo no atacado da Gazin, vocês colocam peças com garantia eterna na vitrine. Consigo te enviar nosso catálogo?"},
+
+  // ── BARRA DE SÃO FRANCISCO ──────────────────────────────
+  {id:"donnafina",cidade:"Barra de São Francisco",nome:"Donna Fina Multimarcas",handle:"—",tipo:"boutique",seg:"—",end:"Av. Leontina Ferreira Martins, 55 — Vila Vicente",obs:"Multimarcas sofisticada — público de alto padrão",ig:"",wa:"5527995128959",g:"Oi! A sofisticação da Donna Fina Multimarcas é notável. Nossas parceiras no interior aumentaram o faturamento vendendo acessórios de paládio para as mesmas clientes que já compram roupas de marca. Topa ver nosso modelo de negócios?"},
+  {id:"madamebsf",cidade:"Barra de São Francisco",nome:"Madame",handle:"—",tipo:"boutique",seg:"—",end:"Av. Edson Henrique Pereira, 355 — Centro",obs:"Estilo refinado — alinhado ao design Gazin",ig:"",wa:"5527999704362",g:"Olá! O estilo da loja Madame tem tudo a ver com o design da Gazin Semijoias. Trabalhamos com margens altas e garantia eterna no banho antialérgico, um diferencial que fideliza clientes de bom gosto. Consigo te enviar um spoiler da coleção?"},
+
+  // ── SANTA MARIA DE JETIBÁ ───────────────────────────────
+  {id:"mercadaomoda",cidade:"Santa Maria de Jetibá",nome:"Mercadão Moda e Infantil",handle:"—",tipo:"boutique",seg:"—",end:"Av. Frederico Grulke, 784 — Centro",obs:"Alto volume de vendas — display de semijoia aumenta lucro por venda",ig:"",wa:"5527326332414",g:"Tudo bem? Como vocês têm um volume de vendas muito bom em Santa Maria de Jetibá, agregar uma torre de semijoias antialérgicas pode aumentar seu lucro em cada venda sem ocupar espaço. O público da serra valoriza qualidade. Podemos conversar?"},
+  {id:"lindalflor",cidade:"Santa Maria de Jetibá",nome:"Loja Linda Flor",handle:"—",tipo:"boutique",seg:"—",end:"Av. Frederico Grulke, 879 — Centro",obs:"Curadoria encantadora — público da serra valoriza qualidade",ig:"",wa:"5527998790780",g:"Olá! A curadoria da Loja Linda Flor é encantadora. Lojistas nas montanhas têm tido sucesso enorme revendendo acessórios com banho vitalício. Não dá problema de estoque, não tem tamanho e gira rápido. Posso apresentar o catálogo da Gazin?"},
+
+  // ── SANTA TERESA ────────────────────────────────────────
+  {id:"modamuleka",cidade:"Santa Teresa",nome:"Moda Muleka",handle:"—",tipo:"boutique",seg:"—",end:"Av. Getúlio Vargas, 66 — Centro",obs:"Santa Teresa = público exigente e de bom gosto",ig:"",wa:"5527996315473",g:"Oi! Santa Teresa atrai um público muito exigente e de bom gosto, bem o perfil da Moda Muleka. A Gazin trabalha com semijoias de alto padrão, sem níquel e margem de lucro agressiva. Quer ver como nossas parceiras estão faturando alto?"},
+  {id:"delicatta",cidade:"Santa Teresa",nome:"Delicatta",handle:"@lojadelicatta_1",tipo:"boutique",seg:"—",end:"Av. Getúlio Vargas, 13 — Centro",obs:"Vestuário + semijoias = compra por impulso garantida",ig:"https://www.instagram.com/lojadelicatta_1/",wa:"5527999710696",g:"Olá! A Delicatta tem um conceito excelente. O vestuário pode sofrer com trocas, mas semijoias são vendas certas e de compra por impulso. A Gazin fornece os displays de luxo perfeitos para sua loja. Faz sentido te enviar algumas fotos?"},
+
+  // ── CONCEIÇÃO DA BARRA ──────────────────────────────────
+  {id:"dluccamodas",cidade:"Conceição da Barra",nome:"D'Lucca Modas",handle:"—",tipo:"boutique",seg:"—",end:"Centro — Rua do Comércio",obs:"Atende turistas e público local — peças resistem à maresia",ig:"",wa:"5527999001122",g:"Tudo bem? A D'Lucca Modas atende muito turista e público local. Nossas semijoias resistem incrivelmente bem à maresia devido ao banho de paládio. Quer atrair mais vendas agregando acessórios duráveis aos looks de verão e passeio?"},
+
+  // ── GUARAPARI ───────────────────────────────────────────
+  {id:"dadasemijoias",cidade:"Guarapari",nome:"Dadá Semijoias",handle:"@dadasemijoias",tipo:"semijoia",seg:"—",end:"",obs:"Referência em semijoias antialérgicas em Guarapari",ig:"https://www.instagram.com/dadasemijoias/",wa:"",g:""},
+
+  // ── SUL ES ──────────────────────────────────────────────
+  {id:"amarojoias",cidade:"Itapemirim / Sul ES",nome:"Amaro Jóias",handle:"@amarojoiass",tipo:"semijoia",seg:"2k",end:"",obs:"Semijoias atemporais — ATACADO e VAREJO",ig:"https://www.instagram.com/amarojoiass/",wa:"",g:""},
+
+  // ── PINHEIROS ───────────────────────────────────────────
+  {id:"estilomulher",cidade:"Pinheiros",nome:"Estilo Mulher Boutique",handle:"—",tipo:"boutique",seg:"—",end:"Centro — Pinheiros ES",obs:"Referência local — clientes fidelizadas, confiam no gosto da loja",ig:"",wa:"5527997004455",g:"Olá! Lojas como a Estilo Mulher em Pinheiros já tem clientes fidelizadas que confiam no seu gosto. A Gazin te ajuda a vender mais para essas mesmas clientes com semijoias com margem de 300%. Posso te mandar o catálogo?",ref:true},
+
+  // ── JAGUARÉ ─────────────────────────────────────────────
+  {id:"pontochicjaguare",cidade:"Jaguaré",nome:"Boutique Ponto Chic",handle:"—",tipo:"boutique",seg:"—",end:"Av. Principal — Centro",obs:"Agronegócio local movimenta o comércio — capital circulando",ig:"",wa:"5527998112233",g:"Oi! O agro em Jaguaré movimenta muito o comércio local. A Boutique Ponto Chic pode capturar ainda mais esse capital agregando semijoias de luxo e garantia vitalícia aos looks das clientes. Gostaria de ver os números e lucro que oferecemos?",ref:true},
+
+  // ── ECOPORANGA ──────────────────────────────────────────
+  {id:"beladama",cidade:"Ecoporanga",nome:"Bela Dama Confecções",handle:"—",tipo:"boutique",seg:"—",end:"Centro — Ecoporanga",obs:"Referência local — lojistas vizinhas já são parceiras Gazin",ig:"",wa:"5527999337788",g:"Olá! O giro da Bela Dama em Ecoporanga é algo que queremos no nosso hall de parceiros. Lojistas de cidades vizinhas já faturam muito usando nossos expositores atacadistas ao lado do caixa. Faz sentido conhecer a operação da Gazin?",ref:true},
+
+  // ── JOÃO NEIVA ──────────────────────────────────────────
+  {id:"charmemodas",cidade:"João Neiva",nome:"Charme Modas",handle:"—",tipo:"boutique",seg:"—",end:"Av. Presidente Vargas — Centro",obs:"Localização estratégica — venda cruzada de roupas + semijoias",ig:"",wa:"5527999445566",g:"Tudo bem? A localização da Charme Modas em João Neiva é excelente. Uma forma inteligente de escalar o lucro é a venda cruzada de roupas com semijoias. A Gazin é pioneira no Brasil com garantia eterna. Posso enviar duas fotos para ilustrar?",ref:true},
+
+  // ── PANCAS ──────────────────────────────────────────────
+  {id:"modaartepancas",cidade:"Pancas",nome:"Moda & Arte Pancas",handle:"—",tipo:"boutique",seg:"—",end:"Centro — Pancas",obs:"Formato atacadista da Gazin compensa frete e tributos",ig:"",wa:"5527998556677",g:"Oi! Lojas de bom gosto em Pancas podem lucrar sem investir em mais espaço físico. A Gazin Semijoias te oferece um formato atacadista onde a margem compensa qualquer frete ou tributo. Quer descobrir nosso catálogo?",ref:true},
+
+  // ── RIO BANANAL ─────────────────────────────────────────
+  {id:"riofashion",cidade:"Rio Bananal",nome:"Boutique Rio Fashion",handle:"—",tipo:"boutique",seg:"—",end:"Centro Comercial — Rio Bananal",obs:"Perfil de revendedora Gazin — peças sem numeração",ig:"",wa:"5527997668899",g:"Olá! O perfil da Boutique Rio Fashion em Rio Bananal tem a cara das revendedoras Gazin. Produtos sem numeração restrita e garantia no banho que suas clientes vão amar. Topa conversar rapidamente sobre uma parceria atacadista?",ref:true},
+
+
+  // ── MONTANHA ────────────────────────────────────────────
+  {id:"styllomontanha",cidade:"Montanha",nome:"Styllo Modas",handle:"@styllo_modas_montanha",tipo:"boutique",seg:"—",end:"Pça. Osvaldo Lopes, 214 — Centro",obs:"Boutique de destaque em Montanha",ig:"https://www.instagram.com/styllo_modas_montanha",wa:"5527997478032",g:"Olá! O estilo da Styllo Modas em Montanha é impecável. Viemos mostrar como blindar o seu faturamento de forma inteligente: agregando semijoias de alta joalheria da Gazin aos seus looks, aumentando seu lucro por cliente. Posso enviar o nosso catálogo?"},
+  {id:"claudiaalvesmoda",cidade:"Montanha",nome:"Claudia Alves Moda Feminina",handle:"—",tipo:"boutique",seg:"—",end:"R. Santa Leopoldina, 613 — Centro",obs:"Público que valoriza qualidade — banho paládio como argumento",ig:"",wa:"5527996180076",g:"Tudo bem? O perfil de clientes da Claudia Alves Moda Feminina valoriza muito a qualidade. A Gazin trabalha com banho de paládio e garantia eterna, fidelizando de primeira. Gostaria de ver como nossas parceiras da região lucram alto sem risco?"},
+  {id:"pimentarosa",cidade:"Montanha",nome:"Pimenta Rosa Store",handle:"—",tipo:"boutique",seg:"—",end:"Av. Antônio Paulino — Centro",obs:"Ponto excelente em Montanha — cross-selling estratégico",ig:"",wa:"5527995781096",g:"Oi! A Pimenta Rosa é um ponto excelente em Montanha. O cross-selling de moda com semijoias atacadistas de garantia vitalícia da Gazin é perfeito para elevar o ticket da venda sem investir em espaço físico. Topa receber nosso material?"},
+
+  // ── PEDRO CANÁRIO ───────────────────────────────────────
+  {id:"andreiamag",cidade:"Pedro Canário",nome:"Andréia Magazine",handle:"—",tipo:"boutique",seg:"—",end:"R. Francisco Rodrigues Dutra, 25 — Centro",obs:"Vestuário e variedades — display de caixa muito eficaz",ig:"",wa:"5527999508476",g:"Olá! O fluxo do Andréia Magazine em Pedro Canário é sensacional. Lojistas como vocês faturam muito mais usando nossos displays compactos de semijoias perto do caixa. Margem alta e giro rápido. Quer descobrir as nossas condições?"},
+  {id:"transparenciaboutique",cidade:"Pedro Canário",nome:"Transparência Boutique",handle:"—",tipo:"boutique",seg:"—",end:"R. Mario Velho Silvares — Vello Silvares",obs:"Público de bom gosto — semijoias atemporais nunca encalham",ig:"",wa:"5527999944861",g:"Tudo bem? A Transparência Boutique atende a um público de extremo bom gosto. Acessórios atemporais com garantia eterna combinam com qualquer coleção e nunca encalham. Posso te apresentar nosso modelo de negócio?"},
+  {id:"trappuz",cidade:"Pedro Canário",nome:"Trappuz Multimarcas",handle:"—",tipo:"boutique",seg:"—",end:"R. Francisco Rodrigues Dutra, 19 — Centro",obs:"Multimarcas — semijoias sem numeração = zero risco de encalhe",ig:"",wa:"5527999092247",g:"Oi! Acompanho a curadoria da Trappuz. Semijoias atacadistas Gazin, que não têm restrição de numeração e possuem garantia eterna no banho antialérgico, multiplicam o lucro das vendas de marcas exclusivas. Faz sentido conversarmos?"},
+
+  // ── SOORETAMA ───────────────────────────────────────────
+  {id:"anaguilhermodas",cidade:"Sooretama",nome:"Anaguilher Modas",handle:"@anaguilhermodas",tipo:"boutique",seg:"—",end:"Av. Basílio Cerri, 507",obs:"Confiança das clientes já conquistada — expandir com semijoias",ig:"https://www.instagram.com/anaguilhermodas/",wa:"5527997412817",g:"Olá! Lojas como a Anaguilher Modas em Sooretama já possuem a confiança das clientes. A Gazin ajuda a vender mais para o mesmo público usando semijoias com margem de 300%. Teria interesse em receber algumas fotos do mostruário?"},
+  {id:"rafaskimodas",cidade:"Sooretama",nome:"Rafaski Modas",handle:"—",tipo:"boutique",seg:"—",end:"Av. Vista Alegre, 289 — Centro",obs:"Venda casada: manequim com roupa + semijoia Gazin",ig:"",wa:"5527998610998",g:"Oi! A localização da Rafaski Modas no Centro é excelente. Uma estratégia rápida de rentabilidade é compor seus manequins com semijoias da Gazin e fazer venda casada. Consigo te enviar um spoiler da nossa nova coleção?"},
+  {id:"lojavidio",cidade:"Sooretama",nome:"Loja Vidio",handle:"—",tipo:"boutique",seg:"—",end:"Av. Vista Alegre, 128 — Centro",obs:"Nome forte no Centro — mercado de acessórios aquecido na região",ig:"",wa:"5527997241023",g:"Tudo bem? A Vidio tem um nome forte no Centro. O mercado de acessórios está muito aquecido na região, e nossa garantia eterna tira todo o risco de encalhe da sua vitrine. Quer ver as condições atacadistas da Gazin?"},
+
+  // ── MARILÂNDIA ──────────────────────────────────────────
+  {id:"laimarmoda",cidade:"Marilândia",nome:"Laimar Moda Íntima",handle:"—",tipo:"boutique",seg:"—",end:"Av. Dom Bôsco, 437 — Centro",obs:"Moda íntima + semijoias = sinergia em presentes e autocuidado",ig:"",wa:"5527999968547",g:"Olá! A proposta da Laimar em moda íntima tem muita sinergia com o mercado de presentes e autocuidado. Acrescentar correntes e semijoias antialérgicas aos pedidos aumenta bastante a lucratividade sem esforço logístico. Vamos bater um papo?"},
+  {id:"alexandrabona",cidade:"Marilândia",nome:"Alexandra Bona",handle:"—",tipo:"boutique",seg:"—",end:"Av. Dom Bôsco, 223 — Centro",obs:"Público valoriza acabamento — margem de 300% como argumento principal",ig:"",wa:"5527996072958",g:"Oi! O público em Marilândia valoriza peças bem acabadas e é isso que vi na loja da Alexandra Bona. A Gazin entrega semijoias com margem de até 300% para blindar os lucros da loja. Posso compartilhar o nosso catálogo contigo?"},
+
+  // ── VILA VALÉRIO ────────────────────────────────────────
+  {id:"vilachique",cidade:"Vila Valério",nome:"Vila Chique Moda Feminina",handle:"@vilachiqueoficial",tipo:"boutique",seg:"—",end:"R. São Sebastião, 55 — Centro",obs:"Nome e estilo alinhados ao posicionamento Gazin",ig:"http://instagram.com/vilachiqueoficial",wa:"5527999098638",g:"Olá! O nome Vila Chique faz jus ao estilo da loja. Acessórios de luxo com garantia eterna não quebram grade e têm giro muito acelerado. Quero te convidar para conhecer as franquias da Gazin Semijoias no modelo atacadista."},
+  {id:"novohorizontevv",cidade:"Vila Valério",nome:"Loja Novo Horizonte",handle:"—",tipo:"boutique",seg:"—",end:"Av. Dr. Valério — Centro",obs:"Alto volume no Centro — venda por impulso no caixa",ig:"",wa:"5527372881116",g:"Tudo bem? O ponto da Novo Horizonte no Centro atrai muito volume. Usar nossos expositores menores é uma ótima estratégia de venda por impulso na hora em que o cliente for pagar a roupa. Topa entender a margem?"},
+
+  // ── IBIRAÇU ─────────────────────────────────────────────
+  {id:"toninhamodas",cidade:"Ibiraçu",nome:"Toninha Modas",handle:"—",tipo:"boutique",seg:"—",end:"Av. Conde D'Eu, 511 — Centro",obs:"Tradição local — agregar semijoias eleva ticket por venda",ig:"",wa:"5527999460006",g:"Oi! A tradição da Toninha Modas em Ibiraçu é notória. A Gazin é atacadista de semijoias com banho antialérgico, perfeito para agregar valor às suas roupas e aumentar o ticket por venda. Posso mandar 2 fotos para ilustrar?"},
+  {id:"rosachic",cidade:"Ibiraçu",nome:"Rosachic",handle:"—",tipo:"boutique",seg:"—",end:"Av. Conde D'Eu, 575 — Centro",obs:"Curadoria alinhada às tendências — cross-selling natural",ig:"",wa:"5527325771854",g:"Olá! A curadoria da Rosachic em Ibiraçu é muito alinhada às tendências. Como o forte de vocês é moda, o cross-selling com semijoias da Gazin (sem tamanho e com giro rápido) multiplica seus lucros. Teria um tempinho para falarmos?"},
+
+  // ── BOA ESPERANÇA ───────────────────────────────────────
+  {id:"millamiss",cidade:"Boa Esperança",nome:"Milla Miss",handle:"@lojamillamiss",tipo:"boutique",seg:"—",end:"Av. Democrata, 662 — Centro",obs:"Identidade visual forte — venda casada roupa + semijoia",ig:"https://www.instagram.com/lojamillamiss",wa:"5527997030017",g:"Oi! A identidade visual da Milla Miss é linda! O que acha de alavancar o faturamento através de venda casada? A cliente compra a roupa e leva o acessório para compor o look. Temos as semijoias ideais e com banho eterno pra isso."},
+  {id:"velache",cidade:"Boa Esperança",nome:"Velachê Boa Esperança",handle:"@lojavelache",tipo:"boutique",seg:"—",end:"Av. Eurico Rezende, 785 — Centro",obs:"Apelo fortíssimo no Centro — loja de alta performance",ig:"https://www.instagram.com/lojavelache",wa:"5527999989444",g:"Tudo bem? A loja Velachê tem um apelo fortíssimo no Centro. A Gazin trabalha com margens de 300% para lojistas de alta performance, fornecendo a torre expositora para acelerar os ganhos. Consigo te enviar um pdf rápido da coleção?"},
+
+  // ── FUNDÃO ──────────────────────────────────────────────
+  {id:"divinolook",cidade:"Fundão",nome:"Divino Look Boutique",handle:"—",tipo:"boutique",seg:"—",end:"R. Pres. Vargas, 119 — Centro",obs:"Dita a moda da região — semijoias giram mais rápido que vestuário",ig:"",wa:"5527996383394",g:"Olá! A Divino Look em Fundão dita a moda da região. Nossas peças não amassam, não dependem de provador e não dão alergia, girando o caixa mais rápido que o vestuário. Quer conhecer a estrutura e solidez da Gazin?"},
+  {id:"vibeboutique",cidade:"Fundão",nome:"Vibe Boutique",handle:"—",tipo:"boutique",seg:"—",end:"R. São José, 55 — Centro",obs:"Baixo investimento atacadista = resultado rápido no faturamento",ig:"",wa:"5527999636588",g:"Oi! Acompanhando a Vibe Boutique, notei que agregamos valor um ao outro. Com baixo investimento atacadista, você coloca semijoias de excelência na vitrine e aumenta instantaneamente seu faturamento mensal. Posso te detalhar no áudio?"},
+
+
+  // ── ECOPORANGA (reforço) ────────────────────────────────
+  {id:"viadeusoboutique",cidade:"Ecoporanga",nome:"Via de Uso Boutique",handle:"@viadeusoboutique",tipo:"boutique",seg:"—",end:"R. Cristalino de Abreu — Centro",obs:"Referência em Ecoporanga — venda casada moda + semijoia",ig:"https://www.instagram.com/viadeusoboutique/",wa:"5527999010949",g:"Olá! O perfil da Via de Uso Boutique é referência em Ecoporanga. Agregar as semijoias antialérgicas da Gazin às suas roupas garante venda casada imediata, aumentando muito o lucro por cliente. Faz sentido te enviar 2 fotos dos nossos expositores?"},
+  {id:"closetboutiquecoe",cidade:"Ecoporanga",nome:"Closet Boutique",handle:"—",tipo:"boutique",seg:"—",end:"R. Nove de Abril, 143 — Centro",obs:"Ponto central — display de caixa gera venda por impulso",ig:"",wa:"5527999447830",g:"Oi! O ponto da Closet Boutique no Centro atrai muito volume. Usar nossos expositores menores é uma ótima estratégia de venda por impulso perto do caixa. O banho é eterno e não dá alergia. Topa entender a nossa margem atacadista?"},
+  {id:"tecilar",cidade:"Ecoporanga",nome:"Tecilar",handle:"—",tipo:"boutique",seg:"—",end:"Av. Milton Mota, 691 — Centro",obs:"Tradição e giro alto — semijoias 300% margem para rentabilizar espaço",ig:"",wa:"5527375551277",g:"Tudo bem? Como a Tecilar tem muita tradição e giro em Ecoporanga, semijoias com margem de até 300% são ideais para rentabilizar ainda mais o seu espaço. Quer conhecer as condições da Gazin para a sua loja?"},
+
+  // ── JAGUARÉ (reforço) ───────────────────────────────────
+  {id:"nualgeboutique",cidade:"Jaguaré",nome:"Nualge Boutique",handle:"@nualgeboutique",tipo:"boutique",seg:"—",end:"R. Constante Casagrande, 396 — Centro",obs:"Moda feminina e masculina — cross-selling aumenta ticket médio",ig:"https://instagram.com/nualgeboutique",wa:"5527996064771",g:"Olá! A curadoria da Nualge em Jaguaré é impecável. Como vocês trabalham forte a moda, o cross-selling com semijoias da Gazin (sem tamanho e com giro rápido) vai multiplicar o ticket médio. Posso mandar nosso catálogo de lançamento?"},
+  {id:"sabordamoda",cidade:"Jaguaré",nome:"Sabor da Moda",handle:"—",tipo:"boutique",seg:"—",end:"Av. Nove de Agosto, 2093 — Centro",obs:"Apelo fortíssimo — torres expositoras aceleram ganhos",ig:"",wa:"5527999026709",g:"Oi! A loja Sabor da Moda tem um apelo fortíssimo em Jaguaré. A Gazin fornece torres expositoras para acelerar os ganhos de lojistas de alta performance, com margem absurda. Consigo te enviar um PDF rápido da nossa estrutura?"},
+  {id:"leromajaguare",cidade:"Jaguaré",nome:"LÉ ROMA",handle:"—",tipo:"boutique",seg:"—",end:"Av. Nove de Agosto — Centro",obs:"Ponto nobre — mercado de acessórios de luxo em crescimento",ig:"",wa:"5527999494399",g:"Tudo bem? O ponto de vocês na Nove de Agosto é excelente. O mercado de acessórios de luxo cresce muito, e nossa garantia vitalícia blinda sua loja contra encalhes. Quer ver as condições atacadistas que trouxemos pro norte do ES?"},
+
+  // ── PANCAS (reforço) ────────────────────────────────────
+  {id:"looksmodafem",cidade:"Pancas",nome:"Look's Moda Feminina",handle:"—",tipo:"boutique",seg:"—",end:"Av. Pres. Vargas, 400 — Lajinha",obs:"Público exigente em Pancas — semijoias de giro rápido",ig:"",wa:"5527996175473",g:"Olá! O público de Pancas é muito exigente, e a Look's atende super bem. A Gazin é a atacadista com garantia vitalícia no banho. Nossas peças não amassam e giram rápido. Gostaria de um spoiler da coleção?"},
+  {id:"janeluchi",cidade:"Pancas",nome:"Jane Luchi Boutique",handle:"—",tipo:"boutique",seg:"—",end:"Av. Treze de Maio, 281 — Centro",obs:"Banho de paládio puro — argumento de qualidade que fecha venda",ig:"",wa:"5527372661018",g:"Oi! Acompanhando o estilo da Jane Luchi, vi que agregamos valor um ao outro. Com baixo investimento atacadista, você coloca peças com banho de paládio puro na vitrine e aumenta instantaneamente seu faturamento. Posso detalhar em um áudio?"},
+  {id:"celiamodas",cidade:"Pancas",nome:"Célia Modas",handle:"—",tipo:"boutique",seg:"—",end:"Av. Treze de Maio, 785 — Centro",obs:"Venda casada: roupa + semijoia eterna compõe o look",ig:"",wa:"5527999491312",g:"Tudo bem? A identidade da Célia Modas é linda! O que acha de alavancar o faturamento através de venda casada? A cliente compra a roupa e leva a semijoia eterna para compor o look. Faz sentido falarmos?"},
+
+  // ── PINHEIROS (reforço) ─────────────────────────────────
+  {id:"velachepinheiros",cidade:"Pinheiros",nome:"Loja Velachê Pinheiros",handle:"@lojavelache",tipo:"boutique",seg:"—",end:"Av. Agenor Luís Heringer, 265",obs:"Presença digital forte — coleções atemporais blindam faturamento",ig:"https://www.instagram.com/lojavelache/",wa:"5527999989946",g:"Olá! A presença digital da Velachê em Pinheiros é fantástica. Como vocês focam em tendências, vim mostrar como blindar o faturamento agregando semijoias de alta joalheria aos looks. Posso enviar 2 fotos dos nossos displays?"},
+  {id:"black15pinheiros",cidade:"Pinheiros",nome:"Lojas Black 15",handle:"—",tipo:"boutique",seg:"—",end:"Av. Setembrino Pelissari, 428 — Centro",obs:"Fluxo sensacional — displays compactos de caixa muito eficazes",ig:"",wa:"5527999853820",g:"Oi! O fluxo da Black 15 em Pinheiros é sensacional. Lojistas como vocês faturam muito mais usando nossos displays compactos de semijoias da Gazin. Produto atemporal que eleva ticket médio na hora. Vamos bater um papo rápido?"},
+  {id:"perobacountry",cidade:"Pinheiros",nome:"Peroba Moda Country",handle:"@useperoba",tipo:"boutique",seg:"—",end:"Av. Setembrino Pelissari, 428 — Centro",obs:"Moda country — colares e argolas Gazin completam os looks sertanejos",ig:"https://www.instagram.com/useperoba",wa:"5527999518666",g:"Tudo bem? A moda country da Peroba pede acessórios à altura! Colares e argolas com garantia eterna da Gazin complementam muito bem os looks sertanejos. Teria interesse em revender nossas peças para sua carteira de clientes?"},
+
+  // ── CONCEIÇÃO DA BARRA (reforço) ────────────────────────
+  {id:"aboutiquecb",cidade:"Conceição da Barra",nome:"A Boutique",handle:"—",tipo:"boutique",seg:"—",end:"R. Carlos Castro, 375 — Centro",obs:"Peças resistem à maresia — banho antialérgico de alta resistência",ig:"",wa:"5527999544739",g:"Olá! A proposta de A Boutique em Conceição da Barra é super alinhada ao nosso negócio. Nossas peças não maresiam, pois têm banho antialérgico de alta resistência, perfeito para o clima litorâneo. Quer ver as condições atacadistas?"},
+  {id:"parisboutiquecb",cidade:"Conceição da Barra",nome:"Paris Boutique",handle:"—",tipo:"boutique",seg:"—",end:"Av. Pai João — Centro",obs:"Nome e ponto de destaque — margem 300% para blindar lucros",ig:"",wa:"5527996865599",g:"Oi! O nome e o ponto da Paris Boutique chamam muita atenção. A Gazin entrega semijoias com margem de até 300% para blindar os lucros da loja de frente para a concorrência. Posso compartilhar o nosso catálogo contigo?"},
+  {id:"barrafashion",cidade:"Conceição da Barra",nome:"Loja Barra Fashion",handle:"—",tipo:"boutique",seg:"—",end:"R. Estephania de Oliveira Serra, 179",obs:"Moda casual/praia — banho de paládio resistente ao verão",ig:"",wa:"5527376222279",g:"Tudo bem? O perfil da Barra Fashion tem muita força no verão. Nossas peças recebem banho de paládio resistente e possuem garantia vitalícia, ideais para o seu cliente usar sem medo na praia. Teria um tempinho para falarmos?"},
+
+  // ── RIO BANANAL (reforço) ───────────────────────────────
+  {id:"uzzeboutique",cidade:"Rio Bananal",nome:"UZZE Boutique",handle:"—",tipo:"boutique",seg:"—",end:"Av. Quatorze de Setembro, 1849",obs:"Sinergia com presentes — brincos e correntes Gazin sem provador",ig:"",wa:"5527998005150",g:"Olá! A proposta da UZZE Boutique em Rio Bananal tem muita sinergia com presentes. Acrescentar brincos e correntes Gazin aos pedidos aumenta muito sua lucratividade sem precisar de provador. Vamos bater um papo?"},
+  {id:"visualmodas",cidade:"Rio Bananal",nome:"Visual Modas",handle:"—",tipo:"boutique",seg:"—",end:"Av. Quatorze de Setembro, 1804",obs:"Tradição notória — expositor gera vendas automáticas",ig:"",wa:"5527998042462",g:"Oi! A tradição da Visual Modas no Centro é notória. A Gazin é atacadista com estrutura nacional e nosso expositor gera vendas automáticas na sua loja. Posso mandar um PDF da coleção para você analisar?"},
+  {id:"impacttriobananal",cidade:"Rio Bananal",nome:"Impactt",handle:"—",tipo:"boutique",seg:"—",end:"Av. Virgílio Grassi, 53 — São Sebastião",obs:"Produto sem grade de tamanho = fidelização pela garantia eterna",ig:"",wa:"5527999417817",g:"Tudo bem? Sabemos que lojistas em Rio Bananal valorizam produtos com giro. As peças da Gazin não quebram grade de tamanho, fidelizam pela garantia eterna e rendem ótimo lucro. Posso te apresentar nossa marca?"},
+
+  // ── LARANJA DA TERRA ────────────────────────────────────
+  {id:"lojao102030",cidade:"Laranja da Terra",nome:"Lojão 102030",handle:"@lojao.102030",tipo:"boutique",seg:"—",end:"R. Carlos Stabenow — Centro",obs:"Fluxo alto — semijoias como isca de margem 300%",ig:"https://www.instagram.com/lojao.102030",wa:"5527999306833",g:"Olá! Lojas de fluxo alto como a de vocês em Laranja da Terra precisam de produtos 'iscas' com alta margem. As semijoias da Gazin geram lucro de até 300% na venda de balcão. Teria interesse em conhecer?"},
+  {id:"lojapaulista",cidade:"Laranja da Terra",nome:"Loja Paulista",handle:"—",tipo:"boutique",seg:"—",end:"R. Carlos Stabenow, 401 — Centro",obs:"Coração da cidade — expositor iluminado atrai olhares e eleva conta",ig:"",wa:"",g:"Oi! A Loja Paulista está no coração da cidade. Ter um expositor iluminado da Gazin Semijoias atrai os olhares e aumenta a conta do cliente que ia levar só uma roupa. Quer ver como funciona a parceria?"},
+
+  // ── ÁGUIA BRANCA ────────────────────────────────────────
+  {id:"ltmultimarcas",cidade:"Águia Branca",nome:"LT Multimarcas",handle:"@thaynanmodas",tipo:"boutique",seg:"—",end:"R. Guarani, 67 — Centro",obs:"Público de bom gosto — semijoias assinam os looks com luxo",ig:"https://www.instagram.com/thaynanmodas/",wa:"5527997900428",g:"Olá! O trabalho de multimarcas da LT em Águia Branca atrai um público de muito bom gosto. As semijoias de alta joalheria da Gazin servem para assinar os looks de vocês com muito luxo e lucro. Posso enviar o mostruário digital?"},
+  {id:"rosemodas",cidade:"Águia Branca",nome:"Rose Modas",handle:"—",tipo:"boutique",seg:"—",end:"R. Jonas Dório de Souza — Centro",obs:"Público que valoriza qualidade — paládio não escurece, não queima o nome",ig:"",wa:"5527999472580",g:"Oi! O perfil de clientes da Rose Modas valoriza qualidade extrema. A Gazin trabalha com banho de paládio e garantia eterna, sem risco da peça escurecer e queimar seu nome. Gostaria de ver como lucrar com isso?"},
+
+  // ── MANTENÓPOLIS ────────────────────────────────────────
+  {id:"closetmodas",cidade:"Mantenópolis",nome:"Closet Modas",handle:"@oficial.closet",tipo:"boutique",seg:"—",end:"Av. Pres. Vargas, 455 — Centro",obs:"Moda de primeira — semijoias aumentam faturamento médio",ig:"https://www.instagram.com/oficial.closet/",wa:"5527996137313",g:"Tudo bem? A Closet Modas já entrega moda de primeira na Vargas. O próximo passo lógico é compor as roupas com semijoias da Gazin para aumentar o faturamento médio sem investir em mais espaço físico. Faz sentido falarmos?"},
+  {id:"socialclub",cidade:"Mantenópolis",nome:"Loja Social Club",handle:"—",tipo:"boutique",seg:"—",end:"Av. Pres. Vargas, 257 — Centro",obs:"Curadoria perfeita — venda casada roupas + acessórios de garantia vitalícia",ig:"",wa:"5527995146559",g:"Olá! A curadoria da Social Club é perfeita. O que acha de alavancar o faturamento através de venda casada de roupas + acessórios de garantia vitalícia? A Gazin é líder nisso. Teria 5 minutinhos?"},
+  {id:"glamourboutique",cidade:"Mantenópolis",nome:"Glamour Boutique",handle:"—",tipo:"boutique",seg:"—",end:"Av. Pres. Vargas, 253",obs:"Nome alinhado ao posicionamento Gazin — torres expositoras ideais",ig:"",wa:"5527995334446",g:"Oi! O nome Glamour tem tudo a ver com alta joalheria e semijoias finas. Quero te convidar para conhecer as torres expositoras da Gazin no modelo atacadista, ideais para o seu espaço. Podemos trocar uma ideia rápida?"},
+
+  // ── SÃO ROQUE DO CANAÃ ──────────────────────────────────
+  {id:"kboutique",cidade:"São Roque do Canaã",nome:"K. Boutique",handle:"—",tipo:"boutique",seg:"—",end:"R. Atilio Dalla Bernardina, 271",obs:"Peças 100% livres de níquel — giro rápido para lojas de moda",ig:"",wa:"5527999029146",g:"Olá! A proposta da K. Boutique em São Roque do Canaã é excelente. Nossas peças antialérgicas (100% livres de níquel) geram caixa muito rápido para lojas de moda. Gostaria de conhecer nossa estrutura e margem de revenda?"},
+  {id:"maribe",cidade:"São Roque do Canaã",nome:"Maribê",handle:"@use.maribe",tipo:"boutique",seg:"—",end:"R. Atilio Dalla Bernardina, 241",obs:"Dita tendências em São Roque — cross-selling de coleções atemporais",ig:"https://www.instagram.com/use.maribe/",wa:"5527999342264",g:"Oi! O estilo e posicionamento digital da Maribê chamaram nossa atenção. Como a loja dita tendências em São Roque, as coleções atemporais da Gazin seriam um cross-selling perfeito para suas clientes. Posso te enviar as condições?"},
+  {id:"layraabreu",cidade:"São Roque do Canaã",nome:"Layra Abreu Brand",handle:"—",tipo:"boutique",seg:"—",end:"R. Lourenço Roldi",obs:"Marca com identidade forte — clientes exigentes valorizam garantia vitalícia",ig:"",wa:"5527998962143",g:"Tudo bem? A identidade forte da marca Layra Abreu atrai clientes exigentes. Oferecer semijoias da Gazin com garantia vitalícia vai agregar muito valor às suas entregas diárias. Quer descobrir as vantagens que oferecemos?"},
+
+
+  // ── ÁGUA DOCE DO NORTE ──────────────────────────────────
+  {id:"finaestampaadn",cidade:"Água Doce do Norte",nome:"Fina Estampa Boutique",handle:"@finaestampa_adn",tipo:"boutique",seg:"—",end:"Centro",obs:"Grande referência local — semijoias aumentam faturamento sem mais espaço",ig:"https://www.instagram.com/finaestampa_adn/",wa:"",g:"Olá! A Fina Estampa é uma grande referência em Água Doce do Norte. Agregar semijoias com garantia vitalícia aos looks que vocês já vendem é a forma mais rápida de aumentar o faturamento sem precisar de mais espaço físico. Faz sentido conhecer a Gazin?"},
+
+  // ── ALTO RIO NOVO ───────────────────────────────────────
+  {id:"pontodamoda",cidade:"Alto Rio Novo",nome:"Loja Ponto da Moda",handle:"—",tipo:"boutique",seg:"—",end:"Av. Paulo Martins — Centro",obs:"Muito fluxo — expositor de caixa gera venda por impulso 300% margem",ig:"",wa:"5527999881234",g:"Oi! O Ponto da Moda tem muito fluxo. Um expositor da Gazin perto do caixa gera vendas por impulso com uma margem de até 300% para a loja. Teria interesse em dar uma olhada no nosso catálogo?"},
+
+  // ── GOVERNADOR LINDENBERG ───────────────────────────────
+  {id:"espacomodecharme",cidade:"Governador Lindenberg",nome:"Espaço Moda & Charme",handle:"—",tipo:"boutique",seg:"—",end:"Novo Brasil — Centro",obs:"Público valoriza durabilidade — paládio puro + garantia eterna",ig:"",wa:"",g:"Tudo bem? O público de Governador Lindenberg valoriza peças que duram. As semijoias da Gazin possuem banho de paládio puro e garantia eterna. É lucro limpo e cliente satisfeito. Posso enviar 2 fotos dos expositores?"},
+
+  // ── JOÃO NEIVA (reforço) ────────────────────────────────
+  {id:"belladonaboutique",cidade:"João Neiva",nome:"Bella Dona Boutique",handle:"—",tipo:"boutique",seg:"—",end:"R. Sete de Setembro — Centro",obs:"Público de excelente gosto — peças compõem com qualquer look",ig:"",wa:"5527997654321",g:"Olá! A Bella Dona atende um público de excelente gosto em João Neiva. Nossas peças não maresiam e têm banho antialérgico, perfeitas para suas clientes comporem com as roupas da loja. Podemos conversar rapidinho?"},
+
+  // ── ITARANA ─────────────────────────────────────────────
+  {id:"stilomodasitarana",cidade:"Itarana",nome:"Stilo Modas",handle:"—",tipo:"boutique",seg:"—",end:"Av. Jerônimo Monteiro — Centro",obs:"Tradição local — semijoias atemporais sem encalhe por numeração",ig:"",wa:"5527998765432",g:"Oi! A tradição da Stilo Modas em Itarana pede acessórios à altura. Como parceiro Gazin, você tem alta lucratividade em peças atemporais que nunca encalham por numeração. Quer conferir o modelo de negócio?"},
+
+  // ── MUCURICI ────────────────────────────────────────────
+  {id:"lojacharme",cidade:"Mucurici",nome:"Loja Charme",handle:"—",tipo:"boutique",seg:"—",end:"Praça São Sebastião — Centro",obs:"Ótima localização — display iluminado atrai olhares e aumenta conta",ig:"",wa:"",g:"Tudo bem? A Loja Charme está muito bem localizada. Ter um display iluminado da Gazin Semijoias atrai os olhares e aumenta a conta do cliente que ia levar só uma roupa. Quer ver como funciona a parceria?"},
+
+  // ── PONTO BELO ──────────────────────────────────────────
+  {id:"glamourmodas",cidade:"Ponto Belo",nome:"Glamour Modas",handle:"—",tipo:"boutique",seg:"—",end:"R. Principal — Centro",obs:"Dita tendência na região — venda casada roupa + semijoia eterna",ig:"",wa:"",g:"Olá! A Glamour Modas dita tendência na região. O que acha de alavancar o faturamento através de venda casada? A cliente compra a roupa e leva a semijoia eterna para compor o look. Faz sentido?"},
+
+  // ── SANTA LEOPOLDINA ────────────────────────────────────
+  {id:"mariabonita",cidade:"Santa Leopoldina",nome:"Boutique Maria Bonita",handle:"—",tipo:"boutique",seg:"—",end:"R. do Comércio — Centro",obs:"Perfil ideal para alta joalheria Gazin — margem até 300%",ig:"",wa:"5527999112233",g:"Oi! Acompanhando o comércio de Santa Leopoldina, vi que a Maria Bonita tem um perfil ideal para as peças de alta joalheria da Gazin. A margem chega a 300%. Posso detalhar em um áudio como funciona?"},
+
+  // ── SÃO DOMINGOS DO NORTE ───────────────────────────────
+  {id:"vitrinemodas",cidade:"São Domingos do Norte",nome:"Vitrine Modas",handle:"—",tipo:"boutique",seg:"—",end:"Av. Principal — Centro",obs:"Público exigente — paládio 100% livre de níquel, sem risco de alergia",ig:"",wa:"5527998224455",g:"Tudo bem? O perfil de clientes da Vitrine Modas valoriza qualidade. A Gazin trabalha com banho de paládio, 100% livre de níquel, sem risco de dar alergia na sua cliente. Gostaria de ver o nosso catálogo?"},
+
+
+  // ── EIXO SUL E CAPARAÓ ──────────────────────────────────
+  {id:"estacaomodasac",cidade:"Afonso Cláudio",nome:"Estação Modas",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Alto giro — expositor Gazin 300% margem",ig:"",wa:"",g:"Olá! A Estação Modas tem muito giro. Agregar semijoias com margem de 300% aos seus looks é a melhor forma de blindar seu caixa. Faz sentido conhecer o expositor da Gazin?"},
+  {id:"boutiqueuniv",cidade:"Alegre",nome:"Boutique Universitária",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Público jovem/universitário — design moderno Gazin conquista",ig:"",wa:"",g:"Oi! Alegre tem um público universitário forte que ama novidades. Nossas peças têm design moderno e preço de atacado competitivo para você revender com alto lucro. Posso mandar 2 fotos?"},
+  {id:"charmeestilo",cidade:"Alfredo Chaves",nome:"Loja Charme & Estilo",handle:"—",tipo:"boutique",seg:"—",end:"Av. Getúlio Vargas",obs:"Clientela valoriza durabilidade — banho eterno Gazin elimina devoluções",ig:"",wa:"",g:"Tudo bem? A clientela de Alfredo Chaves valoriza durabilidade. As semijoias Gazin têm garantia eterna no banho. É lucro limpo sem dor de cabeça com devolução. Quer ver como funciona?"},
+  {id:"sereiamodapraia",cidade:"Anchieta",nome:"Sereia Moda Praia & Casual",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Litoral — peças resistem ao uso diário e agregam valor aos biquínis",ig:"",wa:"",g:"Olá! Lojas no litoral como a sua precisam de acessórios que resistam. Nossas peças suportam o uso diário e agregam muito valor aos biquínis e saídas de praia. Posso te apresentar nosso modelo?"},
+  {id:"apiacamodas",cidade:"Apiacá",nome:"Apiacá Modas",handle:"—",tipo:"boutique",seg:"—",end:"Praça Central",obs:"Display de caixa — venda por impulso 300% margem",ig:"",wa:"",g:"Oi! Um display da Gazin aí no caixa da loja vai gerar vendas por impulso todos os dias. O investimento inicial é baixo e a margem é de 300%. Faz sentido para você?"},
+  {id:"donnafashion",cidade:"Atílio Vivácqua",nome:"Donna Fashion",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Referência local — venda o look completo: roupa + semijoia de luxo",ig:"",wa:"",g:"Tudo bem? A Donna Fashion é referência. Que tal aumentar o ticket médio vendendo o look completo (roupa + semijoia de luxo)? A Gazin te dá todo o suporte."},
+  {id:"fronteiramodas",cidade:"Bom Jesus do Norte",nome:"Fronteira Modas",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Divisa de estado — fluxo alto, semijoias convertem fácil sem ocupar espaço",ig:"",wa:"",g:"Olá! Estando na divisa, você atende muita gente. Nossas semijoias atraem o olhar e convertem fácil, sem ocupar espaço físico na sua loja. Gostaria de ver o catálogo?"},
+  {id:"serranamoda",cidade:"Brejetuba",nome:"Serrana Moda Feminina",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Clima serrano — peças Gazin complementam moda inverno/casual",ig:"",wa:"",g:"Oi! Sabemos que o clima de Brejetuba pede elegância. As peças da Gazin complementam perfeitamente a moda inverno/casual da sua loja. Podemos conversar 5 minutos?"},
+  {id:"maisonelegance",cidade:"Cachoeiro de Itapemirim",nome:"Maison Elegance",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Boutique alto padrão — paládio antialérgico para clientes exigentes",ig:"",wa:"5528999887766",g:"Tudo bem? O público de Cachoeiro exige sofisticação. A Gazin tem peças de alta joalheria em paládio, antialérgicas, perfeitas para suas clientes mais exigentes. Posso enviar um spoiler?"},
+  {id:"bellacastelo",cidade:"Castelo",nome:"Bella Castelo Boutique",handle:"—",tipo:"boutique",seg:"—",end:"Av. Nossa Sra. da Penha",obs:"Comércio fortíssimo em Castelo — semijoias multiplicam faturamento",ig:"",wa:"",g:"Olá! O comércio de Castelo é fortíssimo. Agregar semijoias com garantia vitalícia à sua loja é a receita para multiplicar o faturamento sem esforço extra. Faz sentido?"},
+  {id:"charmeimperial",cidade:"Conceição do Castelo",nome:"Charme Imperial Modas",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Tradição local — peças nunca escurecem, display iluminado atrai olhares",ig:"",wa:"",g:"Oi! A tradição do comércio local pede produtos confiáveis. Nossas peças nunca escurecem e têm giro rápido. Quer ver fotos de como o display fica lindo na loja?"},
+  {id:"caparaofashion",cidade:"Divino de São Lourenço",nome:"Caparaó Fashion",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Turismo do Caparaó crescendo — acessórios de qualidade à pronta entrega",ig:"",wa:"",g:"Tudo bem? Com o turismo na região do Caparaó crescendo, ter acessórios de qualidade à pronta entrega no seu balcão é venda na certa. Quer conhecer a Gazin?"},
+  {id:"edelweissboutique",cidade:"Domingos Martins",nome:"Edelweiss Boutique",handle:"—",tipo:"boutique",seg:"—",end:"Campinho",obs:"Requinte local — peças livres de níquel para moda inverno/alto padrão",ig:"",wa:"5527999334455",g:"Olá! O requinte de Domingos Martins exige o melhor. Nossas peças livres de níquel e com banho eterno são perfeitas para suas clientes combinarem com a moda local. Posso mandar 2 fotos?"},
+  {id:"estilorioproto",cidade:"Dores do Rio Preto",nome:"Estilo Rio Preto",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Vitrine com semijoias iluminadas atrai clientes para as roupas",ig:"",wa:"",g:"Oi! Uma vitrine com semijoias iluminadas atrai mais clientes para suas roupas. A venda casada é a melhor amiga do lojista. Teria interesse em ver o catálogo?"},
+  {id:"perolamodasguacui",cidade:"Guaçuí",nome:"Pérola Modas Guaçuí",handle:"—",tipo:"boutique",seg:"—",end:"Praça João Acacinho",obs:"Polo estratégico — semijoias Gazin se vendem sozinhas no expositor",ig:"",wa:"",g:"Tudo bem? O polo de Guaçuí é estratégico. Trabalhar com semijoias Gazin significa ter margem de revenda alta e um produto que se vende sozinho no expositor. Vamos conversar?"},
+  {id:"brisasmodapraia",cidade:"Guarapari",nome:"Brisas Moda Praia",handle:"—",tipo:"boutique",seg:"—",end:"Praia do Morro",obs:"Maresia: banho hiper-resistente Gazin — cliente compra biquíni e leva semijoia",ig:"",wa:"5527999118899",g:"Olá! O maior desafio em Guarapari é a maresia, certo? A Gazin possui um banho hiper-resistente e garantia vitalícia. Suas clientes compram o biquíni e levam a semijoia sem medo."},
+  {id:"tropeiromodas",cidade:"Ibatiba",nome:"Tropeiro Modas",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Comércio aquecido — semijoias não saem de moda, trazem lucro limpo",ig:"",wa:"",g:"Oi! Ibatiba tem um comércio aquecido. Semijoias não ocupam espaço, não saem de moda e trazem lucro limpo. Que tal montar um ponto de luz na sua loja com nossos expositores?"},
+  {id:"naturezafashion",cidade:"Ibitirama",nome:"Natureza Fashion",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Cidades menores: peças atemporais convertem muito bem",ig:"",wa:"",g:"Tudo bem? Para a mulher que visita Ibitirama, o básico bem feito funciona muito. Nossas peças atemporais convertem muito bem em cidades menores. Faz sentido falarmos?"},
+  {id:"estradamodas",cidade:"Iconha",nome:"Estrada Modas",handle:"—",tipo:"boutique",seg:"—",end:"Rodovia / Centro",obs:"Boa visibilidade — semijoias aumentam ticket sem contratar mais vendedoras",ig:"",wa:"",g:"Olá! A visibilidade da sua loja em Iconha é ótima. Que tal agregar semijoias Gazin? Elas aumentam o ticket médio sem que você precise contratar mais vendedoras."},
+  {id:"flordeirupi",cidade:"Irupi",nome:"Flor de Irupi Boutique",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Semijoias combinam com tudo, não dão alergia — venda o look completo",ig:"",wa:"",g:"Oi! A Flor de Irupi tem peças lindas. Com a Gazin, você vende o look completo, pois nossas semijoias combinam com tudo e não dão alergia. Posso te mostrar o catálogo?"},
+  {id:"solmarconfec",cidade:"Itapemirim",nome:"Sol & Mar Confecções",handle:"—",tipo:"boutique",seg:"—",end:"Itaipava",obs:"Litoral de Itapemirim — acessórios resistentes fidelizam pela garantia eterna",ig:"",wa:"",g:"Tudo bem? O fluxo no litoral de Itapemirim exige produtos de qualidade. Nossos acessórios resistem ao verão e fidelizam o cliente pela garantia eterna. Quer ver como lucrar com isso?"},
+  {id:"aguasclaras",cidade:"Iúna",nome:"Águas Claras Boutique",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Boutique elegante — peças sem tamanho, sem encalhe, alto lucro atacado",ig:"",wa:"",g:"Olá! A curadoria de vocês em Iúna é excelente. A Gazin é a parceira ideal de atacado para boutiques: peças elegantes, sem exigência de tamanhos (não encalha) e alto lucro."},
+  {id:"veraoouro",cidade:"Marataízes",nome:"Verão Ouro Boutique",handle:"—",tipo:"boutique",seg:"—",end:"Av. Atlântica",obs:"Calçadão: cliente quer estar linda — colar ou brinco Gazin completa o look",ig:"",wa:"",g:"Oi! Em Marataízes, a cliente quer estar linda no calçadão. Você vende a roupa e já oferece o colar ou brinco Gazin. Tudo com garantia eterna contra defeitos de banho. Posso enviar fotos?"},
+  {id:"orquidea",cidade:"Marechal Floriano",nome:"Orquídea Fashion",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Serra capixaba — sofisticação antialérgica com até 300% de lucro",ig:"",wa:"",g:"Tudo bem? A serra capixaba pede sofisticação. Trabalhar com as semijoias antialérgicas da Gazin eleva o status da sua loja e garante até 300% de lucro no bolso. Quer dar uma olhada?"},
+  {id:"valemodas",cidade:"Muniz Freire",nome:"Vale Modas",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Display em Muniz Freire tem dado ótimos resultados — cliente vê e se apaixona",ig:"",wa:"",g:"Olá! Agregar valor sem ocupar espaço é a chave do varejo. Nossos displays em Muniz Freire têm mostrado resultados excelentes. A cliente vê, se apaixona e leva. Vamos conversar?"},
+  {id:"conchasmodapraia",cidade:"Piúma",nome:"Conchas Moda Praia",handle:"—",tipo:"boutique",seg:"—",end:"Orla",obs:"Verão forte em Piúma — tecnologia anti-maresia Gazin é diferencial",ig:"",wa:"",g:"Oi! O verão em Piúma é forte. Nossas peças são desenvolvidas com tecnologia para não maresiar facilmente. É o acessório perfeito para o look de praia das suas clientes!"},
+  {id:"kennedymodas",cidade:"Presidente Kennedy",nome:"Kennedy Modas",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Crescimento local — semijoias retêm o cliente que veio pela roupa",ig:"",wa:"",g:"Tudo bem? O crescimento de Kennedy traz novas oportunidades. Vender semijoias é o jeito mais fácil de reter o cliente que entra na sua loja para comprar roupa. Quer ver o catálogo?"},
+  {id:"boutiquerinovos",cidade:"Rio Novo do Sul",nome:"Boutique Rio Novo",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Loja de bom gosto — alta joalheria Gazin com investimento acessível no atacado",ig:"",wa:"",g:"Olá! Uma loja de bom gosto como a sua merece acessórios de alta joalheria. A Gazin Semijoias aumenta a sua rentabilidade com investimento super acessível no atacado."},
+  {id:"calcadofashion",cidade:"São José do Calçado",nome:"Calçado Fashion",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Display perto do caixa = venda por impulso garantida",ig:"",wa:"",g:"Oi! Uma vitrine com brilho atrai mais vendas. Que tal colocar um display de semijoias perto do caixa? É venda garantida por impulso. Posso explicar como funciona?"},
+  {id:"pedrabranca",cidade:"Vargem Alta",nome:"Pedra Branca Moda Inverno",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Frio: peças ouro 18k + paládio harmonizam com tricôs e casacos",ig:"",wa:"",g:"Tudo bem? Em Vargem Alta, o frio pede elegância. As nossas peças com banho em ouro 18k e paládio harmonizam com tricôs e casacos, aumentando muito seu ticket médio. Vamos bater um papo?"},
+  {id:"polentina",cidade:"Venda Nova do Imigrante",nome:"Polentina Boutique",handle:"—",tipo:"boutique",seg:"—",end:"Vila da Mata",obs:"Alto padrão — garantia vitalícia essencial para clientela exigente de Venda Nova",ig:"",wa:"5527999556677",g:"Olá! Venda Nova respira qualidade. A Gazin oferece garantia vitalícia, algo essencial para o seu nível de clientela. Agregue luxo sem dores de cabeça. Quer receber o catálogo?"},
+
+
+  // ── EIXO SUL EXPANSÃO ───────────────────────────────────
+  {id:"harmonize",cidade:"Cachoeiro de Itapemirim",nome:"Clínica Harmonize Estética",handle:"—",tipo:"estetica",seg:"—",end:"Bairro Gilberto Machado",obs:"Referência em estética — display de semijoias na recepção gera lucro passivo",ig:"",wa:"5528999110022",g:"Olá! O padrão de atendimento de vocês no Gilberto Machado é referência. Muitas clínicas parceiras da Gazin rentabilizam o tempo de espera das pacientes com nossos displays de semijoias antialérgicas (100% livres de níquel). Conseguimos falar 5 minutos sobre isso?"},
+  {id:"mariamaria",cidade:"Cachoeiro de Itapemirim",nome:"Boutique Maria e Maria",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Venda casada roupa + semijoia Gazin — margem 300%",ig:"",wa:"5528999334455",g:"Tudo bem? Acompanho a curadoria da loja. Lojistas em Cachoeiro têm aumentado o ticket médio fazendo venda casada de roupas com as semijoias da Gazin. A margem chega a 300%. Posso enviar 2 fotos dos nossos expositores?"},
+  {id:"lookperfeito",cidade:"Cachoeiro de Itapemirim",nome:"Loja Look Perfeito",handle:"—",tipo:"boutique",seg:"—",end:"Bairro Guandu",obs:"Fluxo intenso no Guandu — expositor de caixa converte por impulso",ig:"",wa:"5528998776655",g:"Oi! O fluxo no Guandu é intenso. Um expositor da Gazin perto do caixa gera vendas por impulso incríveis. O investimento inicial é baixo e o giro é rápido. Faz sentido conhecer?"},
+  {id:"corpodourado",cidade:"Guarapari",nome:"Corpo Dourado Moda Praia",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Moda praia — banho hiper-resistente à maresia Gazin é o diferencial",ig:"",wa:"5527999223344",g:"Olá! Vender moda praia em Guarapari pede acessórios que aguentem o verão. A Gazin tem tecnologia de banho hiper-resistente à maresia. A cliente leva o biquíni e a semijoia sem medo. Quer dar uma olhada?"},
+  {id:"studiofacebody",cidade:"Guarapari",nome:"Studio Face & Body",handle:"—",tipo:"estetica",seg:"—",end:"Praia do Morro",obs:"Clínica de estética — ponto de luz de semijoias gera lucro passivo na recepção",ig:"",wa:"",g:"Tudo bem? Pacientes de estética valorizam beleza em todos os detalhes. Ter um ponto de luz com semijoias da Gazin na sua recepção gera lucro passivo e embeleza o ambiente. Faz sentido falarmos?"},
+  {id:"bellarosa",cidade:"Guarapari",nome:"Bella Rosa Multimarcas",handle:"—",tipo:"boutique",seg:"—",end:"Muquiçaba",obs:"Venda casada: roupa + semijoia eterna para compor o look",ig:"",wa:"5527998881122",g:"Oi! A Bella Rosa tem roupas lindas. O que acha de alavancar o faturamento através de venda casada? A cliente compra a roupa e leva a semijoia eterna para compor o look. Posso enviar o catálogo?"},
+  {id:"lacodefita",cidade:"Castelo",nome:"Laço de Fita Modas",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Comércio exigente de Castelo — garantia vitalícia fideliza clientes",ig:"",wa:"5528999445566",g:"Olá! O comércio de Castelo é exigente. A Gazin oferece semijoias com garantia vitalícia no banho, sem risco de escurecer. É um produto que fideliza a cliente que já compra roupa com você. Quer conhecer?"},
+  {id:"drapele",cidade:"Castelo",nome:"Dra. Pele Clínica de Estética",handle:"—",tipo:"estetica",seg:"—",end:"Av. Ministro Araripe",obs:"Clínica parceira — venda passiva de semijoias cobre custos fixos da recepção",ig:"",wa:"",g:"Tudo bem? A estrutura de vocês é excelente. Clínicas parceiras estão cobrindo os custos fixos apenas com a venda passiva de semijoias Gazin na recepção. Nossas peças não dão alergia. Gostaria de ver como funciona?"},
+  {id:"republicadamoda",cidade:"Alegre",nome:"República da Moda",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Público universitário ama novidade — semijoias modernas Gazin giram bem",ig:"",wa:"5528998221133",g:"Oi! Atender o público universitário em Alegre exige novidade constante. As semijoias não saem de moda e trazem lucro limpo. Que tal montar um ponto de luz na sua loja com nossos expositores?"},
+  {id:"studioelegancehair",cidade:"Alegre",nome:"Studio Elegance Hair & Estética",handle:"—",tipo:"estetica",seg:"—",end:"Vila do Sul",obs:"Salão/estética — cliente que sai bonita quer a semijoia pra completar",ig:"",wa:"",g:"Olá! A mulher que sai do salão quer se sentir completa. Ter um expositor da Gazin perto do caixa gera aquela venda de impulso perfeita. É lucro sem esforço. Posso te apresentar?"},
+  {id:"pontochicguacui",cidade:"Guaçuí",nome:"Ponto Chic Boutique",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Polo do Caparaó — semijoias antialérgicas elevam status da loja",ig:"",wa:"5528999778899",g:"Tudo bem? Guaçuí é um polo forte no Caparaó. Trabalhar com as semijoias antialérgicas da Gazin eleva o status da sua loja e garante alta margem. Quer dar uma olhada no catálogo de lançamentos?"},
+  {id:"belafOrma",cidade:"Guaçuí",nome:"Clínica Bela Forma",handle:"—",tipo:"estetica",seg:"—",end:"Praça João Acacinho",obs:"Pacientes já buscam beleza — semijoias com garantia vitalícia geram lucro limpo",ig:"",wa:"",g:"Oi! As pacientes da Bela Forma já buscam beleza. Ter semijoias de garantia vitalícia na recepção é um serviço a mais que você oferece e que gera lucro limpo. Podemos conversar rapidinho?"},
+  {id:"donnainverno",cidade:"Venda Nova do Imigrante",nome:"Donna Inverno Moda",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Moda inverno — peças ouro/paládio não oxidam e harmonizam com looks pesados",ig:"",wa:"5527999115544",g:"Olá! Em Venda Nova, as roupas de inverno ganham vida com os acessórios certos. As peças da Gazin (banho em ouro e paládio) não oxidam e harmonizam com looks pesados. Faz sentido falarmos?"},
+  {id:"espacovip",cidade:"Venda Nova do Imigrante",nome:"Espaço VIP Estética Facial",handle:"—",tipo:"estetica",seg:"—",end:"Vila Betânea",obs:"Público de extremo bom gosto — peças 100% livres de níquel no pós-atendimento",ig:"",wa:"",g:"Tudo bem? O público de Venda Nova valoriza extremo bom gosto. Oferecer peças 100% livres de níquel no pós-atendimento da sua clínica é um diferencial enorme. Posso enviar um spoiler da coleção?"},
+  {id:"serrachic",cidade:"Domingos Martins",nome:"Serra Chic Roupas",handle:"—",tipo:"boutique",seg:"—",end:"Campinho",obs:"Turismo ano todo em DM — venda casada roupa + semijoia aumenta ticket",ig:"",wa:"5527998997788",g:"Oi! O charme de Domingos Martins atrai turistas o ano todo. A venda casada de roupas + semijoias Gazin aumenta muito o ticket médio sem ocupar espaço na loja. Teria interesse em dar uma olhada?"},
+  {id:"ondaseestilo",cidade:"Marataízes",nome:"Ondas & Estilo",handle:"—",tipo:"boutique",seg:"—",end:"Av. Rubens Rangel",obs:"Moda casual/praia — garantia vitalícia do banho, lucro até 300%",ig:"",wa:"5528999662211",g:"Olá! A moda casual de Marataízes pede acessórios duráveis. A Gazin é a atacadista com garantia vitalícia do banho. Suas clientes vão amar e você lucra até 300%. Posso detalhar em um áudio?"},
+  {id:"centroestlitoral",cidade:"Marataízes",nome:"Centro Estético Litoral",handle:"—",tipo:"estetica",seg:"—",end:"Barra de Itapemirim",obs:"Recepção lucrativa — display Gazin vende semijoias antialérgicas passivamente",ig:"",wa:"",g:"Tudo bem? Rentabilizar o espaço da recepção é inteligente. Com um expositor da Gazin, você vende semijoias antialérgicas passivamente enquanto as clientes aguardam. Quer ver como o display fica lindo?"},
+  {id:"vitrinejovem",cidade:"Iúna",nome:"Vitrine Jovem Modas",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Semijoias não têm quebra de tamanho — giro rápido vs problema de grade",ig:"",wa:"5528999228877",g:"Oi! A Vitrine Jovem é bem localizada em Iúna. O vestuário às vezes sofre com quebra de tamanhos, certo? As semijoias não têm esse problema e giram rápido. Faz sentido conhecer?"},
+  {id:"clinicorenovare",cidade:"Iúna",nome:"Clínica Renovare",handle:"—",tipo:"estetica",seg:"—",end:"Av. Antônio Silveira",obs:"Alta joalheria livre de níquel — cuidado extra e rentabilidade para as pacientes",ig:"",wa:"",g:"Olá! O padrão da Renovare é ótimo. Ter peças de alta joalheria, livres de níquel, à disposição das suas pacientes é sinônimo de cuidado e rentabilidade extra. Podemos conversar 5 minutos?"},
+  {id:"luzdosolibatiba",cidade:"Ibatiba",nome:"Luz do Sol Moda Feminina",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Comércio dinâmico — display na boca do caixa converte muito bem",ig:"",wa:"5528998885533",g:"Tudo bem? O comércio de Ibatiba é super dinâmico. Agregar valor sem ocupar espaço é a chave do varejo. Nossos displays convertem muito bem na boca do caixa. Vamos bater um papo?"},
+  {id:"beiramar",cidade:"Anchieta",nome:"Beira Mar Boutique",handle:"—",tipo:"boutique",seg:"—",end:"Praça Central",obs:"Fluxo ano todo em Anchieta — banho resistente + garantia vitalícia",ig:"",wa:"5528999771100",g:"Oi! Anchieta tem fluxo o ano todo. Trabalhar com semijoias que têm banho resistente e garantia vitalícia é a melhor forma de proteger seu faturamento. Quer conferir nosso modelo de negócio?"},
+  {id:"casaraogmodas",cidade:"Muqui",nome:"Casarão Modas",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Charme histórico de Muqui — peças atemporais Gazin combinam com a atmosfera",ig:"",wa:"",g:"Olá! O charme histórico de Muqui combina com peças atemporais. As semijoias da Gazin nunca saem de moda e trazem uma excelente margem de lucro. Posso te enviar umas fotos?"},
+  {id:"jmfashion",cidade:"Jerônimo Monteiro",nome:"JM Fashion",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Rota principal do Sul do ES — display de caixa = venda por impulso garantida",ig:"",wa:"",g:"Tudo bem? Estar na rota principal do Sul do estado é ótimo para as vendas. Colocar um expositor da Gazin na sua loja é venda garantida por impulso. Quer ver como funciona a parceria?"},
+
+
+  // ── GRANDES POLOS — EXPANSÃO ────────────────────────────
+  {id:"todalinda",cidade:"Colatina",nome:"Boutique Toda Linda",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Perfil forte no Centro — semijoias blindam lucro contra concorrência",ig:"",wa:"5527999881122",g:"Olá! A Toda Linda tem um perfil muito forte no Centro. Várias lojas de Colatina estão blindando o lucro contra a concorrência inserindo semijoias da Gazin no caixa. Margem de até 300%. Quer ver 2 fotos do expositor?"},
+  {id:"studiobeleafina",cidade:"Colatina",nome:"Studio de Beleza Fina",handle:"—",tipo:"estetica",seg:"—",end:"Bairro Esplanada",obs:"Salão — cliente que sai linda quer semijoia, lucro passivo sem esforço",ig:"",wa:"",g:"Oi! As clientes que frequentam o Studio já buscam se sentir lindas. Ter um ponto de luz com semijoias com garantia vitalícia na recepção é lucro sem esforço. Posso detalhar a parceria?"},
+  {id:"espacomulhermodas",cidade:"Colatina",nome:"Espaço Mulher Modas",handle:"—",tipo:"boutique",seg:"—",end:"São Silvano",obs:"Comércio de São Silvano — venda casada semijoias + roupas sem ocupar espaço",ig:"",wa:"5527999554433",g:"Tudo bem? O comércio em São Silvano gira rápido. As semijoias atacadistas da Gazin não ocupam espaço na sua loja e convertem muito bem na venda casada com as roupas. Faz sentido conhecer?"},
+  {id:"vitrinecasual",cidade:"Colatina",nome:"Vitrine Casual",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Curadoria ótima — produtos sem encalhe de numeração e vida longa",ig:"",wa:"5527998229988",g:"Olá! A curadoria da Vitrine Casual é ótima. Produtos que não encalham por numeração e duram a vida toda são o segredo do lucro no varejo atual. Quer conhecer o catálogo da Gazin?"},
+  {id:"dermalaser",cidade:"Colatina",nome:"Clínica Derma Laser",handle:"—",tipo:"estetica",seg:"—",end:"Centro",obs:"Padrão altíssimo — peças 100% livres de níquel geram caixa passivo no pós-atendimento",ig:"",wa:"5527997776655",g:"Oi! O padrão da Derma Laser é altíssimo. Oferecer peças 100% livres de níquel (antialérgicas) no pós-atendimento é um cuidado a mais que gera caixa passivo. Podemos bater um papo rápido?"},
+  {id:"poderosamods",cidade:"Linhares",nome:"Poderosa Modas",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Volume de clientes alto — semijoias aumentam ticket de cada sacola",ig:"",wa:"5527999113344",g:"Tudo bem? O volume de clientes da Poderosa Modas é excelente. Que tal aumentar o ticket de cada sacola adicionando semijoias antialérgicas que se vendem sozinhas perto do caixa?"},
+  {id:"esteticaavlinhares",cidade:"Linhares",nome:"Estética Avançada Linhares",handle:"—",tipo:"estetica",seg:"—",end:"Bairro Conceição",obs:"Clínica — displays iluminados na recepção, pacientes compram enquanto aguardam",ig:"",wa:"",g:"Olá! Rentabilizar a recepção da sua clínica cobre muitos custos fixos. Com os displays iluminados da Gazin, as pacientes compram enquanto aguardam. Posso mostrar como funciona?"},
+  {id:"charmeestilointerlagos",cidade:"Linhares",nome:"Loja Charme & Estilo Interlagos",handle:"—",tipo:"boutique",seg:"—",end:"Bairro Interlagos",obs:"Bem falada no Interlagos — garantia vitalícia passa confiança pra cliente final",ig:"",wa:"5527998882211",g:"Oi! A loja é super bem falada no Interlagos. Nossas parceiras recuperam o pequeno investimento inicial muito rápido porque a garantia vitalícia passa muita confiança pra cliente final. Vamos conversar?"},
+  {id:"beladamaboutique",cidade:"Linhares",nome:"Bela Dama Boutique",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Bom gosto — roupas elegantes pedem acessórios de alta joalheria",ig:"",wa:"5527999665577",g:"Tudo bem? A Bela Dama tem muito bom gosto. Roupas elegantes pedem acessórios de alta joalheria. A Gazin trabalha com paládio e margens altíssimas. Posso enviar um spoiler da coleção?"},
+  {id:"salaconcepthair",cidade:"Linhares",nome:"Salão Concept Hair",handle:"—",tipo:"estetica",seg:"—",end:"Bairro Colina",obs:"Salão alto nível — semijoia antialérgica como venda de impulso na saída",ig:"",wa:"",g:"Olá! A mulher sai do Salão Concept querendo arrasar. Ter semijoias lindas e antialérgicas pra ela levar na hora de pagar o serviço é venda garantida. Faz sentido pra você?"},
+  {id:"imperiomodassm",cidade:"São Mateus",nome:"Império Modas",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Gigante em São Mateus — semijoias multiplicam lucros sem novas araras",ig:"",wa:"5527999332211",g:"Oi! A Império é gigante em São Mateus. Produtos de alto giro e sem restrição de tamanho, como as semijoias Gazin, multiplicam seus lucros sem precisar de novas araras. Quer ver o catálogo?"},
+  {id:"corpofaceestetica",cidade:"São Mateus",nome:"Corpo & Face Estética",handle:"—",tipo:"estetica",seg:"—",end:"Bairro Ideal",obs:"Recepção como centro de lucros — peças sem níquel para pacientes exigentes",ig:"",wa:"5527998445566",g:"Tudo bem? A recepção da Corpo & Face pode ser um centro de lucros. Nossas peças não têm níquel e são perfeitas para pacientes exigentes. Quer ver fotos dos nossos displays em outras clínicas?"},
+  {id:"boutiquelitoralsm",cidade:"São Mateus",nome:"Boutique Litoral",handle:"—",tipo:"boutique",seg:"—",end:"Guriri",obs:"Guriri — tecnologia de banho Gazin suporta maresia, lucro até 300%",ig:"",wa:"",g:"Olá! Atender em Guriri exige produtos resistentes. A tecnologia de banho da Gazin suporta a maresia, dando tranquilidade para a cliente e lucro de até 300% para você. Podemos conversar?"},
+  {id:"closetfeminino",cidade:"São Mateus",nome:"Closet Feminino",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Venda casada do look completo — maior tendência do varejo atual",ig:"",wa:"5527999778899",g:"Oi! Acompanho o Closet Feminino. Fazer venda casada do look com acessórios de garantia eterna é a maior tendência do varejo atual. A cliente sai completa. Posso enviar detalhes?"},
+  {id:"studiomasterbeauty",cidade:"São Mateus",nome:"Studio Master Beauty",handle:"—",tipo:"estetica",seg:"—",end:"Sernamby",obs:"Salão alto nível — semijoias no balcão atraem compra por impulso de quem acabou de se arrumar",ig:"",wa:"",g:"Tudo bem? Um salão de alto nível em São Mateus pede conveniência. Oferecer semijoias Gazin no balcão atrai compras por impulso de quem acabou de se arrumar. Faz sentido conhecer o modelo?"},
+  {id:"donnafashionci",cidade:"Cachoeiro de Itapemirim",nome:"Donna Fashion CI",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Tradicional em Cachoeiro — semijoias Gazin turbinaram o mês de várias lojistas",ig:"",wa:"5528999887766",g:"Olá! A Donna Fashion é super tradicional em Cachoeiro. Lojistas estão usando a Gazin para turbinar o lucro do mês com semijoias que não dão defeito (garantia vitalícia). Quer dar uma olhada?"},
+  {id:"renovarestetica",cidade:"Cachoeiro de Itapemirim",nome:"Renovar Estética Avançada",handle:"—",tipo:"estetica",seg:"—",end:"Independência",obs:"Clínica de porte — expositores passivos na recepção, peças 100% antialérgicas",ig:"",wa:"",g:"Oi! O serviço da Renovar é incrível. Clínicas do seu porte estão faturando alto com expositores de semijoias passivos na recepção. Nossas peças são 100% antialérgicas. Posso mostrar?"},
+  {id:"boutiqueexclusiva",cidade:"Cachoeiro de Itapemirim",nome:"Boutique Exclusiva",handle:"—",tipo:"boutique",seg:"—",end:"Gilberto Machado",obs:"Gilberto Machado exige qualidade — paládio Gazin, luxo com atacado acessível",ig:"",wa:"5528999552233",g:"Tudo bem? O público do Gilberto Machado exige qualidade. Com as semijoias em paládio da Gazin, você oferece um acessório de alto luxo com investimento atacadista acessível. Vamos conversar?"},
+  {id:"lookcertoci",cidade:"Cachoeiro de Itapemirim",nome:"Look Certo Modas",handle:"—",tipo:"boutique",seg:"—",end:"Guandu",obs:"Giro rápido no Guandu — display no caixa gera vendas por impulso",ig:"",wa:"5528998441122",g:"Olá! O giro rápido no Guandu é a sua força. Ter um display de semijoias no caixa gera vendas por impulso absurdas, aumentando a margem geral da loja. Faz sentido te mandar umas fotos?"},
+  {id:"studioglamour",cidade:"Cachoeiro de Itapemirim",nome:"Studio Glamour",handle:"—",tipo:"estetica",seg:"—",end:"Aeroporto",obs:"Salão — semijoias de tendência sem espaço extra, lucro limpo",ig:"",wa:"",g:"Oi! As clientes do Studio Glamour gostam de novidade. Semijoias nunca saem de moda e trazem lucro limpo, sem precisar de muito espaço. Quer conhecer as condições para salões?"},
+  {id:"solmarmodasgua",cidade:"Guarapari",nome:"Sol & Mar Modas",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Acessório tem que resistir em Guarapari — tecnologia anti-maresia Gazin",ig:"",wa:"5527999221100",g:"Tudo bem? Em Guarapari, o acessório tem que resistir. A tecnologia da Gazin protege a peça contra a maresia. É venda certa com os looks de verão da sua loja. Posso te enviar o catálogo?"},
+  {id:"peledeseda",cidade:"Guarapari",nome:"Estética Pele de Seda",handle:"—",tipo:"estetica",seg:"—",end:"Praia do Morro",obs:"Praia do Morro — mostruário iluminado Gazin agrega valor e gera receita passiva",ig:"",wa:"5527998334455",g:"Olá! A Praia do Morro atrai gente exigente. Ter um mostruário iluminado da Gazin na sua recepção agrega valor à clínica e gera dinheiro passivamente. Gostaria de ver como fica?"},
+  {id:"boutiqueveraoouro",cidade:"Guarapari",nome:"Boutique Verão Ouro",handle:"—",tipo:"boutique",seg:"—",end:"Muquiçaba",obs:"Semijoia completa o look na provação — maior estratégia de lucro hoje",ig:"",wa:"5527999667788",g:"Oi! A Boutique Verão Ouro é excelente. Fazer a cliente levar uma semijoia para completar a roupa que ela acabou de provar é a estratégia de maior lucro hoje. Quer conferir nossa parceria?"},
+  {id:"espacovipbeleza",cidade:"Guarapari",nome:"Espaço VIP Beleza",handle:"—",tipo:"estetica",seg:"—",end:"Centro",obs:"Beleza é o foco — peças antialérgicas vendem sozinhas perto do balcão",ig:"",wa:"",g:"Tudo bem? No setor de beleza, agregar serviços ou produtos é fundamental. As peças antialérgicas da Gazin vendem sozinhas perto do seu balcão. Faz sentido conversarmos rapidinho?"},
+  {id:"tendenciafashiongua",cidade:"Guarapari",nome:"Tendência Fashion",handle:"—",tipo:"boutique",seg:"—",end:"Itupeva",obs:"Dita regras em Itupeva — acessórios garantia vitalícia = 300% de lucro",ig:"",wa:"5527997551122",g:"Olá! A moda na Tendência Fashion dita regras. Para acompanhar, acessórios com garantia vitalícia são o par perfeito, trazendo até 300% de lucro para você. Posso enviar um áudio explicando?"},
+  {id:"belaaracruzmodas",cidade:"Aracruz",nome:"Bela Aracruz Modas",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Economia forte de Aracruz — semijoias aproveitam fluxo sem gastar com espaço",ig:"",wa:"5527999448899",g:"Oi! Aracruz tem uma economia muito forte. Integrar as semijoias atacadistas da Gazin na sua vitrine é a forma mais rápida de aproveitar esse fluxo sem gastar com espaço. Quer ver o catálogo?"},
+  {id:"clinicavidabela",cidade:"Aracruz",nome:"Clínica Vida Bela",handle:"—",tipo:"estetica",seg:"—",end:"Bela Vista",obs:"Credibilidade da clínica + peças livres de níquel reforçam segurança das pacientes",ig:"",wa:"",g:"Tudo bem? A Clínica Vida Bela passa muita credibilidade. Agregar os expositores da Gazin, com peças livres de níquel, reforça a segurança das suas pacientes e te dá retorno extra. Posso mostrar fotos?"},
+  {id:"closetdacidade",cidade:"Aracruz",nome:"Closet da Cidade",handle:"—",tipo:"boutique",seg:"—",end:"Coqueiral",obs:"Coqueiral quer qualidade — garantia vitalícia Gazin é o argumento que fecha",ig:"",wa:"5527998112233",g:"Olá! O público do Coqueiral gosta de qualidade e peças que duram. A garantia vitalícia da Gazin é o argumento perfeito pra você vender muito mais. Faz sentido conhecermos a parceria?"},
+  {id:"studioaracruz",cidade:"Aracruz",nome:"Studio Aracruz",handle:"—",tipo:"estetica",seg:"—",end:"Centro",obs:"Salão beleza — toque final com paládio sem alergia direto no caixa",ig:"",wa:"",g:"Oi! No Studio Aracruz, a beleza é o foco. Com a Gazin, você oferece um toque final com acessórios banhados a paládio, sem dar alergia, direto no caixa. Podemos bater um papo de 5 min?"},
+  {id:"modaarte",cidade:"Aracruz",nome:"Moda & Arte",handle:"—",tipo:"boutique",seg:"—",end:"Centro",obs:"Moda e arte combinam com atemporais — sem grade de tamanho, alto lucro",ig:"",wa:"5527997664455",g:"Tudo bem? Moda e Arte combinam com acessórios atemporais. A vantagem da semijoia é que não tem quebra de grade de tamanho. Vende rápido e dá lucro alto. Posso te enviar as novidades?"},
+
+  // ── CAMPOS DOS GOYTACAZES ───────────────────────────────
+  {id:"hollywoodjoias",cidade:"Campos dos Goytacazes",nome:"Hollywood Joias",handle:"@hollywood.joias",tipo:"joalheria",seg:"17k",end:"",obs:"35 anos de mercado — joias, relógios e perfumes",ig:"https://www.instagram.com/hollywood.joias/",wa:"",g:""},
+  {id:"elciojoias",cidade:"Campos dos Goytacazes",nome:"Élcio Joias",handle:"@elciojoias",tipo:"joalheria",seg:"—",end:"",obs:"Referência em Campos dos Goytacazes",ig:"https://www.instagram.com/elciojoias/",wa:"",g:""},
+
+  // ── MACAÉ / NORTE RJ ────────────────────────────────────
+  {id:"autenticasemijoias",cidade:"Macaé / Norte RJ",nome:"Autêntica Semijoias",handle:"@autenticasemijoias",tipo:"semijoia",seg:"—",end:"",obs:"Showroom em Macaé e Campos RJ — rede de revendedoras",ig:"https://www.instagram.com/autenticasemijoias/",wa:"",g:""},
+  {id:"joohacessorios",cidade:"Macaé / Norte RJ",nome:"Jooh Acessórios",handle:"@joohacessorios",tipo:"semijoia",seg:"3k",end:"",obs:"Semijoias hipoalergênicas com garantia — ativo",ig:"https://www.instagram.com/joohacessorios/",wa:"",g:""},
+  {id:"bmbijouxx",cidade:"Macaé / Norte RJ",nome:"BM Bijoux",handle:"@bmbijouxx",tipo:"bijuteria",seg:"50k",end:"",obs:"Atacado de semijoias RJ — envia para todo Brasil",ig:"https://www.instagram.com/bmbijouxx/",wa:"",g:""},
+];
+
+// ═══════════════════════════════════════════════════════════
+const TIPO_L={joalheria:"Joalheria",semijoia:"Semijoia",bijuteria:"Bijuteria",relojoaria:"Relojoaria",acessorios:"Acessórios",boutique:"Boutique/Moda",estetica:"Clínica Estética"};
+const TIPO_C={joalheria:"t-joalheria",semijoia:"t-semijoia",bijuteria:"t-bijuteria",relojoaria:"t-relojoaria",acessorios:"t-acessorios",boutique:"t-boutique",estetica:"t-estetica"};
+
+let ud={},cf="todos";
+function load(){try{ud=JSON.parse(localStorage.getItem("gp_v4")||"{}");}catch(e){ud={};}}
+function save(){localStorage.setItem("gp_v4",JSON.stringify(ud));}
+function get(id){return ud[id]||{status:"nao",nota:""};}
+
+function updateStats(){
+  const t=DATA.length,co=DATA.filter(p=>["con","cli"].includes(get(p.id).status)).length,cl=DATA.filter(p=>get(p.id).status==="cli").length;
+  document.getElementById("st-total").textContent=t+" prospects";
+  document.getElementById("st-con").textContent=co+" contatados";
+  document.getElementById("st-cli").textContent=cl+" clientes";
+  const c=document.getElementById("cfg-total");if(c)c.textContent=t;
+}
+
+function sbHTML(id,cur){
+  return [{k:"nao",c:"s-nao",l:"Não contatado"},{k:"con",c:"s-con",l:"Contatado"},{k:"sem",c:"s-sem",l:"Sem interesse"},{k:"cli",c:"s-cli",l:"Cliente ✓"}]
+    .map(b=>`<button class="sb ${b.c}${cur===b.k?" on":""}" onclick="setStatus('${id}','${b.k}')">${b.l}</button>`).join("");
+}
+
+function cardHTML(p){
+  const u=get(p.id),nota=u.nota||"",hasIG=p.ig&&p.ig.length>4,hasWA=p.wa&&p.wa.length>4,hasG=p.g&&p.g.length>4;
+  const igBtn=hasIG?`<a class="ab btn-ig" href="${p.ig}" target="_blank">📸 Instagram</a>`:`<button class="ab btn-ig" style="opacity:.35;pointer-events:none">📸 Instagram</button>`;
+  const waBtn=hasWA?`<a class="ab btn-wa" href="https://wa.me/${p.wa}" target="_blank">📱 WhatsApp</a>`:`<button class="ab btn-wa off" onclick="showToast('WhatsApp não cadastrado')">📱 WhatsApp</button>`;
+  const scrBtn=hasG?`<button class="ab btn-scr" onclick="toggleG('${p.id}')">💬 Script</button>`:"";
+  const notaBtn=`<button class="ab btn-nota" onclick="toggleNota('${p.id}')">📝 Nota</button>`;
+  return `<div class="prospect-card status-${u.status}" id="card-${p.id}">
+  <div class="p-top">
+    <div style="flex:1;min-width:0">
+      <div class="p-name">${p.nome}${p.ref?'<span class="ref-tag">Ref</span>':""}</div>
+      ${p.handle&&p.handle!=="—"?`<div class="p-handle">${p.handle}</div>`:""}
+      ${p.seg&&p.seg!=="—"?`<div class="p-seg">👥 ${p.seg}</div>`:""}
+      ${p.end?`<div class="p-end">📍 ${p.end}</div>`:""}
+    </div>
+    <span class="tipo-badge ${TIPO_C[p.tipo]||"t-acessorios"}">${TIPO_L[p.tipo]||p.tipo}</span>
+  </div>
+  <div class="p-obs">${p.obs}</div>
+  ${hasG?`<div class="gatilho-box" id="gb-${p.id}"><div class="gatilho-label">💬 Script de abordagem</div><div class="gatilho-text">${p.g}</div><button class="gatilho-copy" onclick="copyG('${p.id}')">Copiar texto</button></div>`:""}
+  <div class="status-row" id="sr-${p.id}">${sbHTML(p.id,u.status)}</div>
+  <div class="action-row">${igBtn}${waBtn}${scrBtn}${notaBtn}</div>
+  <div class="nota-area${nota?" open":""}" id="na-${p.id}">
+    <textarea id="nt-${p.id}" placeholder="Tentativas, resposta, interesse…">${nota}</textarea>
+    <button class="nota-save" onclick="saveNota('${p.id}')">Salvar</button>
+  </div>
+</div>`;
+}
+
+function renderAll(){
+  const cities=[...new Set(DATA.map(p=>p.cidade))];
+  let html="";
+  cities.forEach(c=>{
+    const ps=DATA.filter(p=>p.cidade===c),sid=c.replace(/[^a-z0-9]/gi,"_");
+    html+=`<div class="city-section" id="sec-${sid}"><div class="city-header" onclick="toggleCity('${sid}')"><div style="display:flex;align-items:center"><span class="city-name">${c}</span><span class="city-count">${ps.length}</span></div><span class="chevron">▼</span></div><div class="prospects-list">${ps.map(p=>cardHTML(p)).join("")}</div></div>`;
+  });
+  document.getElementById("container").innerHTML=html;
+  updateStats();
+}
+
+function setStatus(id,s){
+  if(!ud[id])ud[id]={status:"nao",nota:""};
+  ud[id].status=s;save();updateStats();
+  document.getElementById("sr-"+id).innerHTML=sbHTML(id,s);
+  document.getElementById("card-"+id).className="prospect-card status-"+s;
+  applyFilters();
+}
+function toggleG(id){const el=document.getElementById("gb-"+id);if(el)el.classList.toggle("open");}
+function copyG(id){
+  const p=DATA.find(x=>x.id===id);if(!p||!p.g)return;
+  navigator.clipboard.writeText(p.g).then(()=>showToast("Texto copiado ✓")).catch(()=>{
+    const ta=document.createElement("textarea");ta.value=p.g;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);showToast("Texto copiado ✓");
+  });
+}
+function toggleNota(id){document.getElementById("na-"+id).classList.toggle("open");}
+function saveNota(id){
+  if(!ud[id])ud[id]={status:"nao",nota:""};
+  ud[id].nota=document.getElementById("nt-"+id).value;save();showToast("Nota salva ✓");
+}
+function toggleCity(sid){document.getElementById("sec-"+sid).classList.toggle("collapsed");}
+
+function setFilter(f,btn){cf=f;document.querySelectorAll(".fb").forEach(b=>b.classList.remove("active"));btn.classList.add("active");applyFilters();}
+function applyFilters(){
+  const q=document.getElementById("search").value.toLowerCase();
+  let any=false;
+  [...new Set(DATA.map(p=>p.cidade))].forEach(c=>{
+    const sid=c.replace(/[^a-z0-9]/gi,"_"),sec=document.getElementById("sec-"+sid);if(!sec)return;
+    let cv=false;
+    DATA.filter(p=>p.cidade===c).forEach(p=>{
+      const card=document.getElementById("card-"+p.id);if(!card)return;
+      const u=get(p.id),fm={todos:true,nao:u.status==="nao",con:u.status==="con",cli:u.status==="cli",sem:u.status==="sem"};
+      const ok=(fm[cf]??true)&&(!q||c.toLowerCase().includes(q)||p.handle.toLowerCase().includes(q)||p.nome.toLowerCase().includes(q));
+      card.style.display=ok?"":"none";if(ok)cv=true;
+    });
+    sec.style.display=cv?"":"none";if(cv)any=true;
+  });
+  let em=document.getElementById("empty-msg");
+  if(!any){if(!em){em=document.createElement("div");em.id="empty-msg";em.className="empty";em.textContent="Nenhum prospect encontrado";document.getElementById("container").appendChild(em);}em.style.display="";}
+  else if(em)em.style.display="none";
+}
+
+function showPage(id,btn){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("page-"+id).classList.add("active");btn.classList.add("active");
+  if(id==="settings")updateStats();
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(ud,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="gazin_backup.json";a.click();URL.revokeObjectURL(url);showToast("Exportado ✓");
+}
+function importData(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=ev=>{try{ud=JSON.parse(ev.target.result);save();renderAll();showToast("Importado ✓");}catch{showToast("Erro no arquivo");}};r.readAsText(f);
+}
+function clearAll(){if(confirm("Limpar todos os status e notas?")){{ud={};save();renderAll();showToast("Dados limpos");}}}
+function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200);}
+
+load();renderAll();
+</script>
+</body>
+</html>
